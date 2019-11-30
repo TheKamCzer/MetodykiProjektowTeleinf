@@ -1,2 +1,3 @@
+import Demodulator_UT
 
-print("Hello word")
+Demodulator_UT.shouldDemodulateInputBits()

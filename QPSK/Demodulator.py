@@ -1,9 +1,5 @@
 import numpy
 from scipy import signal
-import matplotlib
-
-matplotlib.use('TkAgg')
-from pylab import *
 
 
 class Demodulator:

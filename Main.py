@@ -1,4 +1,6 @@
-from QPSK_UT import Demodulator_UT
+from QPSK_UT import Demodulator_UT, Modulator_Demodulator_UT
 
 Demodulator_UT.shouldDemodulateInputBits()
 Demodulator_UT.shouldDemodulateMostOfInputBitsWithNoise()
+
+Modulator_Demodulator_UT.modulateAndDemodulateBits()

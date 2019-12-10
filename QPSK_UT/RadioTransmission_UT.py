@@ -9,7 +9,7 @@ __SYMBOL_LENGTH_IN_BITS = 32
 __FI = 0
 
 
-def modulateAndDemodulateBits():
+def modulateAndDemodulateBitsWithoutNoise():
     samples = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __NUM_OF_PERIODS_IN_SYMBOL)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, samples, __NUM_OF_PERIODS_IN_SYMBOL)

@@ -7,12 +7,12 @@ __CARRIER_FREQ = 100
 __NUM_OF_PERIODS_IN_SYMBOL = 2
 __SYMBOL_LENGTH_IN_BITS = 32
 __FI = 0
+__SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 
 
 def modulateAndDemodulateBitsWithoutNoise():
-    samples = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, samples, __NUM_OF_PERIODS_IN_SYMBOL)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
 
     signal = modulator.modulate(__INPUT_BITS)
     demodulatedBits = demodulator.demodulate(signal)

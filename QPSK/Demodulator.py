@@ -16,8 +16,8 @@ class Demodulator:
         sigLen = int(len(inputSignal))
         t = numpy.linspace(0, self.numOfPeriods * sigLen / self.carrierFreq / self.symbolLength, sigLen)
         phase = 2 * numpy.pi * self.carrierFreq * t + self.fi
-        branchQ = inputSignal * numpy.sin(phase)
-        branchI = inputSignal * numpy.cos(phase)
+        branchQ = numpy.imag(inputSignal) * -numpy.sin(phase)
+        branchI = numpy.real(inputSignal) * numpy.cos(phase)
         result = []
         for i in range(int(len(inputSignal) / self.symbolLength)):
             signalQ, _ = signal.lfilter(self.firFilter, 1, branchQ[i * self.symbolLength : (i + 1) * self.symbolLength], zi=self.filterDelay)

@@ -1,6 +1,7 @@
 import numpy
 from scipy import signal
 
+
 class Demodulator:
     def __init__(self, carrierFreq, symbolLength, fi, sampleRate, numOfPeriods):
         self.carrierFreq = carrierFreq

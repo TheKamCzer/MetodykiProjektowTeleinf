@@ -1,12 +1,12 @@
-import numpy
+import numpy as np
 
 
 def createSignalI(bit, carrierFreq, fi, time):
-    return bit * numpy.cos(2 * numpy.pi * carrierFreq * time + fi)
+    return bit * np.cos(2 * np.pi * carrierFreq * time + fi)
 
 
 def createSignalQ(bit, carrierFreq, fi, time):
-    return -1j * bit * numpy.sin(2 * numpy.pi * carrierFreq * time + fi)
+    return -1j * bit * np.sin(2 * np.pi * carrierFreq * time + fi)
 
 
 class Modulator:
@@ -18,7 +18,7 @@ class Modulator:
         self.numOfPeriods = numOfPeriods
 
     def modulate(self, bitsToModulate):
-        time = numpy.linspace(0, self.numOfPeriods/self.carrierFreq, self.symbolLength)
+        time = np.linspace(0, self.numOfPeriods/self.carrierFreq, self.symbolLength)
         result = []
         for i in range(0, len(bitsToModulate), 2):
             signalI = createSignalI(bitsToModulate[i], self.carrierFreq, self.fi, time)

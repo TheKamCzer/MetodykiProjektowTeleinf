@@ -2,11 +2,18 @@ import numpy as np
 
 
 def createSignalI(bit, carrierFreq, fi, time):
-    return bit * np.cos(2 * np.pi * carrierFreq * time + fi)
+    return checkValueOfBit(bit) * np.cos(2 * np.pi * carrierFreq * time + fi)
 
 
 def createSignalQ(bit, carrierFreq, fi, time):
-    return -1j * bit * np.sin(2 * np.pi * carrierFreq * time + fi)
+    return -1j * checkValueOfBit(bit) * np.sin(2 * np.pi * carrierFreq * time + fi)
+
+
+def checkValueOfBit(bit):
+    resultBit = bit
+    if bit == 0:
+        resultBit = -1
+    return resultBit
 
 
 class Modulator:

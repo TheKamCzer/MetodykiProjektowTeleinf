@@ -8,8 +8,8 @@ from Record_Play.Player import Player
 ########################
 
 #Filename
-filename = 'myfile.wav'
-
+# filename = 'myfile.wav'
+filename = '/Users/marcingadek/PycharmProjects/MetodykiProjektowTeleinf/Record_Play/myfile.wav'
 # Set chunk size of 1024 samples per data frame
 chunk = 1024
 
@@ -20,10 +20,10 @@ wf = wave.open(filename, 'rb')
 p = pyaudio.PyAudio()
 
 # Open a .Stream object to write the WAV file;'output = True' indicates that the sound will be played
-stream = p.open(format = p.get_format_from_width(wf.getsampwidth()),
-                channels = wf.getnchannels(),
-                rate = wf.getframerate(),
-                output = True)
+stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                channels=wf.getnchannels(),
+                rate=wf.getframerate(),
+                output=True)
 # Read data in chunks
 data = wf.readframes(chunk)
 

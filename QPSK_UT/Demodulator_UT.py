@@ -88,7 +88,7 @@ def shouldDemodulateMostOfInputBitsWithNoise():
     for i in range(int(len(__INPUT_BITS))) :
         if demodulated[i] != __OUTPUT_BITS[i] :
             corruptedBits += 1
-    assert(corruptedBits == 0)
+    assert(corruptedBits/int(len(__INPUT_BITS)) < 0.01)
 
 def run():
     shouldDemodulateInputBits()

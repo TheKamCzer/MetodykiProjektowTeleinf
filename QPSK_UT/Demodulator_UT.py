@@ -83,7 +83,7 @@ def shouldDemodulateMostOfInputBitsWithNoise():
     dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     signal = __calcSignal()
 
-    noise = np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal)
+    noise = np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal) + 1j * np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal)
     signal += noise
     demodulated = dem.demodulate(signal)
     assert(len(__INPUT_BITS) == len(demodulated))

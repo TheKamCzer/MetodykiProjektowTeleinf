@@ -1,3 +1,5 @@
+import time
+
 from QPSK.Modulator import Modulator
 from QPSK.Demodulator import Demodulator
 from RadioTransmission_UT.RadioChannel import RadioChannel
@@ -26,7 +28,8 @@ def __modulateAndDemodulate(snr=None):
     channel = RadioChannel()
 
     signal = modulator.modulate(__BITS)
-    demodulatedBits = demodulator.demodulate(channel.transmit(signal, snr))
+    transmittedSignal = channel.transmit(signal, snr)
+    demodulatedBits = demodulator.demodulate(transmittedSignal)
     return demodulatedBits
 
 
@@ -34,22 +37,31 @@ def __modulateAndDemodulate(snr=None):
 #       TEST CASES
 ########################################################################################################################
 
-def modulateAndDemodulateBitsWithoutNoise():
+def shouldModulateAndDemodulateBitsWithoutErrorWhenNoiseNotPresent():
     demodulatedBits = __modulateAndDemodulate()
     assert demodulatedBits == __BITS
 
-def modulateAndDemodulateBitsWithSnr40():
+def shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs40():
     demodulatedBits = __modulateAndDemodulate(40)
     assert demodulatedBits == __BITS
 
-def modulateAndDemodulateBitsWithSnr0():
+def shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs3():
+    demodulatedBits = __modulateAndDemodulate(3)
+
+    corruptedBits = 0
+    for i in range(int(len(__BITS))):
+        if demodulatedBits[i] != __BITS[i]:
+            corruptedBits += 1
+    assert(corruptedBits/int(len(__BITS)) < 0.01)
+
+def shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0():
     demodulatedBits = __modulateAndDemodulate(0)
 
     corruptedBits = 0
     for i in range(int(len(__BITS))):
         if demodulatedBits[i] != __BITS[i]:
             corruptedBits += 1
-    assert(corruptedBits/int(len(__BITS)) < 0.02)
+    assert(corruptedBits/int(len(__BITS)) < 0.03)
 
 
 ########################################################################################################################
@@ -57,6 +69,7 @@ def modulateAndDemodulateBitsWithSnr0():
 ########################################################################################################################
 
 def run():
-    modulateAndDemodulateBitsWithoutNoise()
-    modulateAndDemodulateBitsWithSnr40()
-    modulateAndDemodulateBitsWithSnr0()
+    shouldModulateAndDemodulateBitsWithoutErrorWhenNoiseNotPresent()
+    shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs40()
+    shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs3()
+    shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0()

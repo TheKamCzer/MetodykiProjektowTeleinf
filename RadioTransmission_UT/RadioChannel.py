@@ -11,6 +11,7 @@ class RadioChannel:
 
     def transmit(self, inputSignal, snr=None):
         if snr is not None:
-            noise = np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)
+            noise = np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)\
+                + 1j * np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)
             inputSignal += noise
         return inputSignal

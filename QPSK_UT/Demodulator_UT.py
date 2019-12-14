@@ -70,7 +70,6 @@ def __calcSignalPower(signal):
 ########################################################################################################################
 
 def shouldDemodulateInputBits():
-    print(len(__INPUT_BITS))
     dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     signal = __calcSignal()
     assert(dem.demodulate(signal) == __OUTPUT_BITS)
@@ -89,7 +88,7 @@ def shouldDemodulateMostOfInputBitsWithNoise():
     for i in range(int(len(__INPUT_BITS))) :
         if demodulated[i] != __OUTPUT_BITS[i] :
             corruptedBits += 1
-    assert(corruptedBits/len(__INPUT_BITS) < 0.05)
+    assert(corruptedBits == 0)
 
 def run():
     shouldDemodulateInputBits()

@@ -1,7 +1,6 @@
 import numpy as np
 import commpy as cp
 
-
 class Demodulator:
     def __init__(self, carrierFreq, symbolLength, fi, sampleRate, numOfPeriods):
         self.carrierFreq = carrierFreq
@@ -11,19 +10,16 @@ class Demodulator:
         self.numOfPeriods = numOfPeriods
         self.psfFilter = cp.rrcosfilter(int(self.symbolLength) * 10 , 0.35, self.symbolLength / self.sampleRate, self.sampleRate)[1]
 
-    def filter(self, inSig):
-        filtered = np.convolve(inSig, self.psfFilter)
-        filtered = filtered[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
-        return filtered
-
     def demodulate(self, inputSignal):
         sigLen = int(len(inputSignal))
         t = np.linspace(0, self.numOfPeriods * sigLen / self.carrierFreq / self.symbolLength, sigLen)
         phase = 2 * np.pi * self.carrierFreq * t + self.fi
-        branchQ = self.filter(np.imag(inputSignal) * -np.sin(phase))
-        branchI = self.filter(np.real(inputSignal) * np.cos(phase))
-        result = []
-        for i in range(int(len(inputSignal) / self.symbolLength)):
-            result.append(0 if branchI[i * self.symbolLength] <= 0 else 1)
-            result.append(0 if branchQ[i * self.symbolLength] <= 0 else 1)
-        return result
+
+        branchI = np.convolve(np.real(inputSignal) * np.cos(phase), self.psfFilter)
+        branchI = branchI[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
+        branchQ = np.convolve(np.imag(inputSignal) * -np.sin(phase), self.psfFilter)
+        branchQ = branchQ[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
+
+        bitsI = [1 if x > 0 else 0 for x in branchI[0::self.symbolLength]]
+        bitsQ = [1 if x > 0 else 0 for x in branchQ[0::self.symbolLength]]
+        return [item for sublist in zip(bitsI, bitsQ) for item in sublist]

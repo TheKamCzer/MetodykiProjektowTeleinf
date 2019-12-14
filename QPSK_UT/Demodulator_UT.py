@@ -1,9 +1,6 @@
 from QPSK.Demodulator import Demodulator
 import numpy as np
 import commpy as cp
-import matplotlib
-matplotlib.use('TkAgg')
-from pylab import *
 
 
 ########################################################################################################################
@@ -46,8 +43,8 @@ def __filterSignal(inSig):
 def __calcSignal():
     numOfBitsPerSig = int(len(__INPUT_BITS) / 2)
 
-    sigI = zeros([int(len(__INPUT_BITS) * __SYMBOL_LENGTH_IN_BITS / 2)])
-    sigQ = zeros([int(len(__INPUT_BITS) * __SYMBOL_LENGTH_IN_BITS / 2)])
+    sigI = np.zeros([int(len(__INPUT_BITS) * __SYMBOL_LENGTH_IN_BITS / 2)])
+    sigQ = np.zeros([int(len(__INPUT_BITS) * __SYMBOL_LENGTH_IN_BITS / 2)])
 
     for i in range(numOfBitsPerSig):
         sigI[int(i * __SYMBOL_LENGTH_IN_BITS)] = __INPUT_BITS[2 * i]
@@ -73,6 +70,7 @@ def __calcSignalPower(signal):
 ########################################################################################################################
 
 def shouldDemodulateInputBits():
+    print(len(__INPUT_BITS))
     dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     signal = __calcSignal()
     assert(dem.demodulate(signal) == __OUTPUT_BITS)
@@ -93,3 +91,6 @@ def shouldDemodulateMostOfInputBitsWithNoise():
             corruptedBits += 1
     assert(corruptedBits/len(__INPUT_BITS) < 0.05)
 
+def run():
+    shouldDemodulateInputBits()
+    shouldDemodulateMostOfInputBitsWithNoise()

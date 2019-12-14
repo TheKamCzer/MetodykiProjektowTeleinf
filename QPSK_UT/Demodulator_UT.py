@@ -1,5 +1,9 @@
 from QPSK.Demodulator import Demodulator
 import numpy as np
+import commpy as cp
+import matplotlib
+matplotlib.use('TkAgg')
+from pylab import *
 
 
 ########################################################################################################################
@@ -10,6 +14,7 @@ __CARRIER_FREQ = 100
 __NUM_OF_PERIODS_IN_SYMBOL = 2
 __SYMBOL_LENGTH_IN_BITS = 32
 __FI = 0
+__SAMPLE_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 __INPUT_BITS = [1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1,
                 1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1,
                 1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1,
@@ -31,17 +36,32 @@ __INPUT_BITS = [1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1
                 1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1,
                 1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1]
 __OUTPUT_BITS = [1 if x > 0 else 0 for x in __INPUT_BITS]
+__PSF = cp.rrcosfilter(int(__SYMBOL_LENGTH_IN_BITS)*10 , 0.35, __SYMBOL_LENGTH_IN_BITS / __SAMPLE_RATE , __SAMPLE_RATE)[1]
 
-def __calcSignal() :
-    time = np.linspace(0, __NUM_OF_PERIODS_IN_SYMBOL / __CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS)
-    angle = 2 * np.pi * __CARRIER_FREQ * time + __FI
+def __filterSignal(inSig):
+    filtered = np.convolve(__PSF, inSig)
+    filtered = filtered[int(__SYMBOL_LENGTH_IN_BITS*5): -int(__SYMBOL_LENGTH_IN_BITS*5)+1]
+    return filtered
 
-    sig = []
-    for i in range(int(len(__INPUT_BITS) / 2)):
-        sig.extend(__INPUT_BITS[i * 2] * np.cos(angle) - 1j*__INPUT_BITS[i * 2 + 1] * np.sin(angle))
-    return sig
+def __calcSignal():
+    numOfBitsPerSig = int(len(__INPUT_BITS) / 2)
 
-def __calcSignalPower(signal) :
+    sigI = zeros([int(len(__INPUT_BITS) * __SYMBOL_LENGTH_IN_BITS / 2)])
+    sigQ = zeros([int(len(__INPUT_BITS) * __SYMBOL_LENGTH_IN_BITS / 2)])
+
+    for i in range(numOfBitsPerSig):
+        sigI[int(i * __SYMBOL_LENGTH_IN_BITS)] = __INPUT_BITS[2 * i]
+        sigQ[int(i * __SYMBOL_LENGTH_IN_BITS)] = __INPUT_BITS[2 * i + 1]
+
+    sigI = __filterSignal(sigI)
+    sigQ = __filterSignal(sigQ)
+
+    t = np.linspace(0, __NUM_OF_PERIODS_IN_SYMBOL / __CARRIER_FREQ * numOfBitsPerSig, __SYMBOL_LENGTH_IN_BITS * numOfBitsPerSig)
+    ang = 2 * np.pi * __CARRIER_FREQ * t + __FI
+
+    return np.multiply(sigI, np.cos(ang)) - 1j * np.multiply(sigQ, np.sin(ang))
+
+def __calcSignalPower(signal):
     sigPow = 0
     for i in range(int(len(signal))):
         sigPow += np.power(np.abs(signal[i]), 2)
@@ -52,14 +72,14 @@ def __calcSignalPower(signal) :
 #       TEST CASES
 ########################################################################################################################
 
-def shouldDemodulateInputBits() :
-    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL, __NUM_OF_PERIODS_IN_SYMBOL)
+def shouldDemodulateInputBits():
+    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     signal = __calcSignal()
     assert(dem.demodulate(signal) == __OUTPUT_BITS)
 
-def shouldDemodulateMostOfInputBitsWithNoise() :
+def shouldDemodulateMostOfInputBitsWithNoise():
 
-    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL, __NUM_OF_PERIODS_IN_SYMBOL)
+    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     signal = __calcSignal()
 
     noise = np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal)
@@ -71,27 +91,5 @@ def shouldDemodulateMostOfInputBitsWithNoise() :
     for i in range(int(len(__INPUT_BITS))) :
         if demodulated[i] != __OUTPUT_BITS[i] :
             corruptedBits += 1
-    assert(corruptedBits/len(__INPUT_BITS) < 0.1)
+    assert(corruptedBits/len(__INPUT_BITS) < 0.05)
 
-def test() :
-    for j in range(__SYMBOL_LENGTH_IN_BITS - 2):
-        signal = __calcSignal()
-        for i in range(j + 1) :
-            signal.insert(0, signal.pop())
-
-        noise = np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal)
-        signal += noise
-        N = int(len(signal))
-        dem = Demodulator(__CARRIER_FREQ-2, __SYMBOL_LENGTH_IN_BITS, __FI, __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL, __NUM_OF_PERIODS_IN_SYMBOL)
-
-        FF = np.zeros([__SYMBOL_LENGTH_IN_BITS])
-        FF[0] = abs(signal[0])
-        for i in range(N-1) :
-            FF[i % __SYMBOL_LENGTH_IN_BITS] += (abs(signal[i+1] - signal[i]))
-
-        demodulated = dem.demodulate(signal[np.argmax(FF) :])
-        corruptedBits = 0
-        for i in range(int(len(__INPUT_BITS)) - 2):
-            if demodulated[i] != __OUTPUT_BITS[i]:
-                corruptedBits += 1
-        assert (corruptedBits / len(__INPUT_BITS) <= 0.1)

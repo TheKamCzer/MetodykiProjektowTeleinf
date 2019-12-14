@@ -8,23 +8,21 @@ class Demodulator:
         self.fi = fi
         self.sampleRate = sampleRate
         self.numOfPeriods = numOfPeriods
-        _, self.psfFilter = cp.rrcosfilter(int(self.symbolLength / 2 - 1), 0.35, self.symbolLength * self.sampleRate, self.sampleRate)
+        self.psfFilter = cp.rrcosfilter(int(self.symbolLength) * 10 , 0.35, self.symbolLength / self.sampleRate, self.sampleRate)[1]
 
     def filter(self, inSig):
         filtered = np.convolve(inSig, self.psfFilter)
-        filtered = filtered[int((self.symbolLength / 2 - 1) / 2): - int((self.symbolLength / 2 - 1) / 2)]
+        filtered = filtered[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
         return filtered
 
     def demodulate(self, inputSignal):
         sigLen = int(len(inputSignal))
         t = np.linspace(0, self.numOfPeriods * sigLen / self.carrierFreq / self.symbolLength, sigLen)
         phase = 2 * np.pi * self.carrierFreq * t + self.fi
-        branchQ = np.imag(inputSignal) * -np.sin(phase)
-        branchI = np.real(inputSignal) * np.cos(phase)
+        branchQ = self.filter(np.imag(inputSignal) * -np.sin(phase))
+        branchI = self.filter(np.real(inputSignal) * np.cos(phase))
         result = []
         for i in range(int(len(inputSignal) / self.symbolLength)):
-            signalQ = self.filter(branchQ[i * self.symbolLength : (i + 1) * self.symbolLength])
-            signalI = self.filter(branchI[i * self.symbolLength : (i + 1) * self.symbolLength])
-            result.append(0 if np.mean(signalI) <= 0 else 1)
-            result.append(0 if np.mean(signalQ) <= 0 else 1)
+            result.append(0 if branchI[i * self.symbolLength] <= 0 else 1)
+            result.append(0 if branchQ[i * self.symbolLength] <= 0 else 1)
         return result

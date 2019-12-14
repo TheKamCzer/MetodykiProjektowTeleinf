@@ -35,6 +35,11 @@ __INPUT_BITS = [1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1
 __OUTPUT_BITS = [1 if x > 0 else 0 for x in __INPUT_BITS]
 __PSF = cp.rrcosfilter(int(__SYMBOL_LENGTH_IN_BITS)*10 , 0.35, __SYMBOL_LENGTH_IN_BITS / __SAMPLE_RATE , __SAMPLE_RATE)[1]
 
+
+########################################################################################################################
+#       FUNCTIONS
+########################################################################################################################
+
 def __filterSignal(inSig):
     filtered = np.convolve(__PSF, inSig)
     filtered = filtered[int(__SYMBOL_LENGTH_IN_BITS*5): -int(__SYMBOL_LENGTH_IN_BITS*5)+1]
@@ -75,7 +80,6 @@ def shouldDemodulateInputBits():
     assert(dem.demodulate(signal) == __OUTPUT_BITS)
 
 def shouldDemodulateMostOfInputBitsWithNoise():
-
     dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     signal = __calcSignal()
 
@@ -89,6 +93,11 @@ def shouldDemodulateMostOfInputBitsWithNoise():
         if demodulated[i] != __OUTPUT_BITS[i] :
             corruptedBits += 1
     assert(corruptedBits/int(len(__INPUT_BITS)) < 0.01)
+
+
+########################################################################################################################
+#       RUN ALL TESTS
+########################################################################################################################
 
 def run():
     shouldDemodulateInputBits()

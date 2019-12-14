@@ -3,6 +3,11 @@ from QPSK.Demodulator import Demodulator
 from RadioTransmission_UT.RadioChannel import RadioChannel
 import numpy as np
 
+
+########################################################################################################################
+#       CONSTANTS
+########################################################################################################################
+
 __BITS = np.random.randint(2, size=44100).tolist()
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
@@ -10,6 +15,10 @@ __SYMBOL_LENGTH_IN_BITS = 8
 __FI = 0
 __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 
+
+########################################################################################################################
+#       FUNCTIONS
+########################################################################################################################
 
 def __modulateAndDemodulate(snr=None):
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
@@ -19,6 +28,11 @@ def __modulateAndDemodulate(snr=None):
     signal = modulator.modulate(__BITS)
     demodulatedBits = demodulator.demodulate(channel.transmit(signal, snr))
     return demodulatedBits
+
+
+########################################################################################################################
+#       TEST CASES
+########################################################################################################################
 
 def modulateAndDemodulateBitsWithoutNoise():
     demodulatedBits = __modulateAndDemodulate()
@@ -36,6 +50,11 @@ def modulateAndDemodulateBitsWithSnr0():
         if demodulatedBits[i] != __BITS[i]:
             corruptedBits += 1
     assert(corruptedBits/int(len(__BITS)) < 0.02)
+
+
+########################################################################################################################
+#       RUN ALL TESTS
+########################################################################################################################
 
 def run():
     modulateAndDemodulateBitsWithoutNoise()

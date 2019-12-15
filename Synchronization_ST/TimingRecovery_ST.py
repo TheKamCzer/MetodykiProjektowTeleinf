@@ -21,7 +21,7 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 #       TEST CASES
 ########################################################################################################################
 
-def shouldRemoveFirstBitFromOtherSymbol():
+def shouldRemoveFirstBitFromOtherSymbol():  #TODO: Camcore fix this shit
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     timeRecover = TimingRecovery(__BUFFER_SIZE, __SYMBOL_LENGTH_IN_BITS)
@@ -41,10 +41,6 @@ def shouldRemoveFirstBitFromOtherSymbol():
             if int(len(properBits)) <= i +2 and demodulatedBits[i] == properBits[i+2]:
                 del properBits[i]
                 del properBits[i+1]
-    print("dupa", corruptedBits)
-
-    print(__BITS)
-    print(demodulatedBits)
 
 
 ########################################################################################################################

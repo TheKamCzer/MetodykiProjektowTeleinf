@@ -1,6 +1,7 @@
 import numpy as np
 import commpy as cp
 
+
 class Demodulator:
     def __init__(self, carrierFreq, symbolLength, fi, sampleRate, numOfPeriods):
         self.carrierFreq = carrierFreq

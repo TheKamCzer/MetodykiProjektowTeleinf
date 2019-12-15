@@ -2,8 +2,8 @@ import numpy as np
 import commpy as cp
 from scipy import signal
 
-class Modulator:
 
+class Modulator:
     def __init__(self, carrierFreq, symbolLength, fi, sampleRate, numOfPeriods):
         self.carrierFreq = carrierFreq
         self.symbolLength = symbolLength

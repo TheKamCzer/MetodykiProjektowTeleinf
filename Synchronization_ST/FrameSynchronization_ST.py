@@ -12,7 +12,7 @@ __HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
             0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
 __BITS = np.random.randint(2, size=500).tolist()
 __FRAME = __HEADER + __BITS
-__SYMBOL_LENGTH_IN_BITS = 32
+__SYMBOL_LENGTH_IN_BITS = 8
 __BUFFER_SIZE = 1024
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
@@ -24,7 +24,8 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 #       FUNCTIONS
 ########################################################################################################################
 
-def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LENGTH_IN_BITS, snr=None, offset=0):
+def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LENGTH_IN_BITS, snr=None, offset=0,
+                                             freqErr=0, phaseErr=0):
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE,
                               __NUM_OF_PERIODS_IN_SYMBOL)
@@ -32,7 +33,7 @@ def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LE
     frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS)
 
     signal = modulator.modulate(__FRAME)
-    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset)
+    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset, carrierFreqErr=freqErr, carrierPhaseErr=phaseErr)
     dataPosition = frameSync.synchronizeFrame(transmittedSignal)
     assert(dataPosition == expectedDataPosition + offset)
 
@@ -67,6 +68,17 @@ def shouldFindFrameWithSnr3InTheMiddleOfStream():
     demodulatedBits = __transmitSignalWithFrameSynchronization(snr=3, offset=242)
     __assertBerLessThan(demodulatedBits, 0.05)
 
+def shouldFindFrameWithSmallPhaseError():
+    __transmitSignalWithFrameSynchronization(snr=10, phaseErr=np.pi/17)
+
+def shouldFindFrameWithLargePhaseError():
+    __transmitSignalWithFrameSynchronization(snr=3, phaseErr=np.pi)
+
+def shouldFindFrameWithSmallFreqError():
+    __transmitSignalWithFrameSynchronization(snr=10, freqErr=10e-4 * __CARRIER_FREQ)
+
+def shouldFindFrameWithLargeFreqAndPhaseError():
+    __transmitSignalWithFrameSynchronization(snr=10, freqErr=10e-2 * __CARRIER_FREQ, phaseErr=np.pi/2)
 
 ########################################################################################################################
 #       RUN ALL TESTS
@@ -77,3 +89,7 @@ def run():
     shouldFindFrameWithoutNoiseInTheMiddleOfStream()
     shouldFindFrameWithSnr3AtTheBeginningOfStream()
     shouldFindFrameWithSnr3InTheMiddleOfStream()
+    shouldFindFrameWithSmallPhaseError()
+    shouldFindFrameWithLargePhaseError()
+    shouldFindFrameWithSmallFreqError()
+    shouldFindFrameWithLargeFreqAndPhaseError()

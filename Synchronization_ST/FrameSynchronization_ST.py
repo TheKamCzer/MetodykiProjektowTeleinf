@@ -33,7 +33,7 @@ def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LE
     frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS)
 
     signal = modulator.modulate(__FRAME)
-    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset, carrierFreqErr=freqErr, carrierPhaseErr=phaseErr)
+    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset, freqErr=freqErr, phaseErr=phaseErr)
     dataPosition = frameSync.synchronizeFrame(transmittedSignal)
     assert(dataPosition == expectedDataPosition + offset)
 

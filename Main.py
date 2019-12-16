@@ -1,6 +1,8 @@
-from QPSK_UT import Demodulator_UT, RadioTransmission_UT
+from QPSK_UT import Demodulator_UT
+from RadioTransmission_ST import RadioTransmission_ST
+from Synchronization_ST import TimingRecovery_ST, FrameSynchronization_ST
 
-Demodulator_UT.shouldDemodulateInputBits()
-Demodulator_UT.shouldDemodulateMostOfInputBitsWithNoise()
-
-RadioTransmission_UT.modulateAndDemodulateBitsWithoutNoise()
+Demodulator_UT.run()
+RadioTransmission_ST.run()
+#TimingRecovery_ST.run()
+FrameSynchronization_ST.run()

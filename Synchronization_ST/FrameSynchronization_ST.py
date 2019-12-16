@@ -24,17 +24,17 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 #       FUNCTIONS
 ########################################################################################################################
 
-def __transmitSignalWithFrameSynchronization(expectedDataPosition=256, snr=None, trashAtBegin=0):
+def __transmitSignalWithFrameSynchronization(expectedDataPosition=256, snr=None, offset=0):
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE,
                               __NUM_OF_PERIODS_IN_SYMBOL)
     channel = RadioChannel()
     frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS)
 
-    signal = modulator.modulate(np.random.randint(2, size=trashAtBegin).tolist() + __FRAME)
-    transmittedSignal = channel.transmit(signal, snr=snr)
+    signal = modulator.modulate(__FRAME)
+    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset)
     dataPosition = frameSync.synchronizeFrame(transmittedSignal)
-    assert(dataPosition == expectedDataPosition + trashAtBegin * __SYMBOL_LENGTH_IN_BITS / 2)
+    assert(dataPosition == expectedDataPosition + offset)
 
     demodulatedBits = demodulator.demodulate(transmittedSignal[dataPosition:])
     return demodulatedBits
@@ -56,7 +56,7 @@ def shouldFindFrameWithoutNoiseAtTheBeginningOfStream():
     assert(demodulatedBits == __BITS)
 
 def shouldFindFrameWithoutNoiseInTheMiddleOfStream():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(trashAtBegin=172)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(offset=171)
     assert(demodulatedBits == __BITS)
 
 def shouldFindFrameWithSnr3AtTheBeginningOfStream():
@@ -64,7 +64,7 @@ def shouldFindFrameWithSnr3AtTheBeginningOfStream():
     __assertBerLessThan(demodulatedBits, 0.05)
 
 def shouldFindFrameWithSnr3InTheMiddleOfStream():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=3, trashAtBegin=242)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=3, offset=242)
     __assertBerLessThan(demodulatedBits, 0.05)
 
 ########################################################################################################################

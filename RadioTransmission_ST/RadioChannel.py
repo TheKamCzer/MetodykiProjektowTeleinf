@@ -24,7 +24,7 @@ class RadioChannel:
         t = np.arange(0, int(len(inputSignal)), 1)
         inputSignal = inputSignal * np.exp(1j * (2 * np.pi * carrierFreqErr * t + carrierPhaseErr))
 
-        if adcSamplingErr is not None:
+        if adcSamplingErr is not None and adcSamplingErr <= 1:
             interpFunc = inter.interp1d(t, inputSignal, kind='cubic')
             inputSignal = interpFunc(np.arange(adcSamplingErr, adcSamplingErr + int(len(inputSignal)) - 1, 1))
 

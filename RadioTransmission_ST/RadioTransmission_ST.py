@@ -22,13 +22,13 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 #       FUNCTIONS
 ########################################################################################################################
 
-def __modulateAndDemodulate(snr=None):
+def __modulateAndDemodulate(snr=None, attenuation=1):
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     channel = RadioChannel()
 
     signal = modulator.modulate(__BITS)
-    transmittedSignal = channel.transmit(signal, snr)
+    transmittedSignal = channel.transmit(signal, snr, channelAttenuation=attenuation)
     demodulatedBits = demodulator.demodulate(transmittedSignal)
     return demodulatedBits
 
@@ -63,6 +63,9 @@ def shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0():
             corruptedBits += 1
     assert(corruptedBits/int(len(__BITS)) < 0.1)
 
+def shouldModulateAndDemodulateBitsWithoutErrorWhenHighAttenuationPresent():
+    demodulatedBits = __modulateAndDemodulate(attenuation=10e6)
+    assert demodulatedBits == __BITS
 
 ########################################################################################################################
 #       RUN ALL TESTS
@@ -73,3 +76,4 @@ def run():
     shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs40()
     shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs3()
     shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0()
+    shouldModulateAndDemodulateBitsWithoutErrorWhenHighAttenuationPresent()

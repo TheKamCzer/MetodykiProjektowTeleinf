@@ -12,7 +12,7 @@ __HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
             0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
 __BITS = np.random.randint(2, size=500).tolist()
 __FRAME = __HEADER + __BITS
-__SYMBOL_LENGTH_IN_BITS = 8
+__SYMBOL_LENGTH_IN_BITS = 32
 __BUFFER_SIZE = 1024
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
@@ -24,7 +24,7 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 #       FUNCTIONS
 ########################################################################################################################
 
-def __transmitSignalWithFrameSynchronization(expectedDataPosition=256, snr=None, offset=0):
+def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LENGTH_IN_BITS, snr=None, offset=0):
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE,
                               __NUM_OF_PERIODS_IN_SYMBOL)
@@ -66,6 +66,7 @@ def shouldFindFrameWithSnr3AtTheBeginningOfStream():
 def shouldFindFrameWithSnr3InTheMiddleOfStream():
     demodulatedBits = __transmitSignalWithFrameSynchronization(snr=3, offset=242)
     __assertBerLessThan(demodulatedBits, 0.05)
+
 
 ########################################################################################################################
 #       RUN ALL TESTS

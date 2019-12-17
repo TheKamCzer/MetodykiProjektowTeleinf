@@ -10,6 +10,7 @@ import numpy as np
 
 __HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
+__SEED = np.random.seed(238923)
 __BITS = np.random.randint(2, size=500).tolist()
 __FRAME = __HEADER + __BITS
 __SYMBOL_LENGTH_IN_BITS = 8
@@ -57,7 +58,7 @@ def shouldFindFrameWithoutNoiseAtTheBeginningOfStream():
     assert(demodulatedBits == __BITS)
 
 def shouldFindFrameWithoutNoiseInTheMiddleOfStream():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(offset=171)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(offset=177)
     assert(demodulatedBits == __BITS)
 
 def shouldFindFrameWithSnr3AtTheBeginningOfStream():

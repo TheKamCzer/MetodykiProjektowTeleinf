@@ -24,6 +24,6 @@ class RadioChannel:
 
         if adcSamplingErr is not None and adcSamplingErr <= 1:
             interpFunc = inter.interp1d(t, inputSignal, kind='cubic')
-            inputSignal = interpFunc(np.arange(adcSamplingErr, adcSamplingErr + int(len(inputSignal)) - 1, 1))
+            inputSignal = interpFunc(np.arange(abs(adcSamplingErr), int(len(inputSignal)) - 1, 1 - adcSamplingErr))
 
         return inputSignal

@@ -1,5 +1,3 @@
-import time
-
 from QPSK.Modulator import Modulator
 from QPSK.Demodulator import Demodulator
 from RadioTransmission_ST.RadioChannel import RadioChannel
@@ -10,6 +8,7 @@ import numpy as np
 #       CONSTANTS
 ########################################################################################################################
 
+__SEED = np.random.seed(238923)
 __BITS = np.random.randint(2, size=100).tolist()
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2

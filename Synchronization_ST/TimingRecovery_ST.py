@@ -8,9 +8,9 @@ import numpy as np
 #       CONSTANTS
 ########################################################################################################################
 
-__BITS = np.random.randint(2, size=5000).tolist()
+__SEED = np.random.seed(238923)
+__BITS = np.random.randint(2, size=2070).tolist()
 __SYMBOL_LENGTH_IN_BITS = 8
-__BUFFER_SIZE = 1024
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
 __FI = 0
@@ -18,29 +18,33 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 
 
 ########################################################################################################################
-#       TEST CASES
+#       FUNCTIONS
 ########################################################################################################################
 
-def shouldRemoveFirstBitFromOtherSymbol():  #TODO: Camcore fix this shit
+def __transmitSignalWithTimingSynchronization(samplingErr):
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    timeRecover = TimingRecovery(__BUFFER_SIZE, __SYMBOL_LENGTH_IN_BITS)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE,
+                              __NUM_OF_PERIODS_IN_SYMBOL)
+    timeRecover = TimingRecovery(__SYMBOL_LENGTH_IN_BITS)
     channel = RadioChannel()
 
     signal = modulator.modulate(__BITS)
-    transmittedSignal = channel.transmit(signal, snr=3, signalOffset=2)
-    recoveredSignal, rest = timeRecover.recoverTime(transmittedSignal)
-    recoveredSignal.extend(rest)
-    demodulatedBits = demodulator.demodulate(recoveredSignal)
+    transmittedSignal = channel.transmit(signal, adcSamplingErr=samplingErr, snr=10)
+    transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)
+    demodulatedBits = demodulator.demodulate(transmittedSignal)
+    return demodulatedBits
 
-    properBits = __BITS
-    corruptedBits = 0
-    for i in range(int(len(demodulatedBits))):
-        if demodulatedBits[i] != properBits[i]:
-            corruptedBits += 2
-            if int(len(properBits)) <= i +2 and demodulatedBits[i] == properBits[i+2]:
-                del properBits[i]
-                del properBits[i+1]
+########################################################################################################################
+#       TEST CASES
+########################################################################################################################
+
+def shouldProperlyDemodulateBitsWithLittleTooHighSampling():
+    demodulatedBits = __transmitSignalWithTimingSynchronization(0.001)
+    assert(demodulatedBits == __BITS)
+
+def shouldProperlyDemodulateBitsWithLittleTooLowSampling():
+    demodulatedBits = __transmitSignalWithTimingSynchronization(-0.001)
+    assert(demodulatedBits == __BITS)
 
 
 ########################################################################################################################
@@ -48,4 +52,5 @@ def shouldRemoveFirstBitFromOtherSymbol():  #TODO: Camcore fix this shit
 ########################################################################################################################
 
 def run():
-    shouldRemoveFirstBitFromOtherSymbol()
+    shouldProperlyDemodulateBitsWithLittleTooHighSampling()
+    shouldProperlyDemodulateBitsWithLittleTooLowSampling()

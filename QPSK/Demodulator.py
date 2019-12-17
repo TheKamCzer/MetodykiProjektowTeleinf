@@ -1,5 +1,5 @@
-import numpy
-from scipy import signal
+import numpy as np
+import commpy as cp
 
 
 class Demodulator:
@@ -9,20 +9,18 @@ class Demodulator:
         self.fi = fi
         self.sampleRate = sampleRate
         self.numOfPeriods = numOfPeriods
-        self.firFilter = signal.firwin(int(self.symbolLength / 2) - 1 , self.carrierFreq / self.sampleRate)
-        self.filterDelay = signal.lfilter_zi( self.firFilter, 1)
+        self.psfFilter = cp.rrcosfilter(int(self.symbolLength) * 10 , 0.35, self.symbolLength / self.sampleRate, self.sampleRate)[1]
 
     def demodulate(self, inputSignal):
         sigLen = int(len(inputSignal))
-        t = numpy.linspace(0, self.numOfPeriods * sigLen / self.carrierFreq / self.symbolLength, sigLen)
-        phase = 2 * numpy.pi * self.carrierFreq * t + self.fi
-        branchQ = numpy.imag(inputSignal) * -numpy.sin(phase)
-        branchI = numpy.real(inputSignal) * numpy.cos(phase)
-        result = []
-        for i in range(int(len(inputSignal) / self.symbolLength)):
-            signalQ, _ = signal.lfilter(self.firFilter, 1, branchQ[i * self.symbolLength : (i + 1) * self.symbolLength], zi=self.filterDelay)
-            signalI, _ = signal.lfilter(self.firFilter, 1, branchI[i * self.symbolLength : (i + 1) * self.symbolLength], zi=self.filterDelay)
+        t = np.linspace(0, self.numOfPeriods * sigLen / self.carrierFreq / self.symbolLength, sigLen)
+        phase = 2 * np.pi * self.carrierFreq * t + self.fi
 
-            result.append(0 if numpy.mean(signalI) <= 0 else 1)
-            result.append(0 if numpy.mean(signalQ) <= 0 else 1)
-        return result
+        branchI = np.convolve(np.real(inputSignal) * np.cos(phase), self.psfFilter)
+        branchI = branchI[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
+        branchQ = np.convolve(np.imag(inputSignal) * -np.sin(phase), self.psfFilter)
+        branchQ = branchQ[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
+
+        bitsI = [1 if x > 0 else 0 for x in branchI[0::self.symbolLength]]
+        bitsQ = [1 if x > 0 else 0 for x in branchQ[0::self.symbolLength]]
+        return [item for sublist in zip(bitsI, bitsQ) for item in sublist]

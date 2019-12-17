@@ -8,11 +8,11 @@ import numpy as np
 #       CONSTANTS
 ########################################################################################################################
 
-__SEED = np.random.seed(238923)
-__BITS = np.random.randint(2, size=100).tolist()
+__SEED = np.random.seed(238924)
+__BITS = np.random.randint(2, size=200).tolist()
 __CARRIER_FREQ = 20000
-__NUM_OF_PERIODS_IN_SYMBOL = 2
-__SYMBOL_LENGTH_IN_BITS = 8
+__NUM_OF_PERIODS_IN_SYMBOL = 1
+__SYMBOL_LENGTH_IN_BITS = 4
 __FI = 0
 __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 
@@ -21,15 +21,26 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 #       FUNCTIONS
 ########################################################################################################################
 
-def __modulateAndDemodulate(snr=None, attenuation=1):
+def __modulateSignal():
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    channel = RadioChannel()
+    return modulator.modulate(__BITS)
 
-    signal = modulator.modulate(__BITS)
+def __demodulateSignal(signal):
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    return demodulator.demodulate(signal)
+
+def __modulateAndDemodulate(snr=None, attenuation=1):
+    channel = RadioChannel()
+    signal = __modulateSignal()
     transmittedSignal = channel.transmit(signal, snr, channelAttenuation=attenuation)
-    demodulatedBits = demodulator.demodulate(transmittedSignal)
-    return demodulatedBits
+    return __demodulateSignal(transmittedSignal)
+
+def __assertBerLessThan(signal, maxBer):
+    corruptedBits = 0
+    for i in range(int(len(__BITS))):
+        if signal[i] != __BITS[i]:
+            corruptedBits += 1
+    assert (corruptedBits / int(len(__BITS)) <= maxBer)
 
 
 ########################################################################################################################
@@ -46,21 +57,11 @@ def shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs40():
 
 def shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs3():
     demodulatedBits = __modulateAndDemodulate(3)
-
-    corruptedBits = 0
-    for i in range(int(len(__BITS))):
-        if demodulatedBits[i] != __BITS[i]:
-            corruptedBits += 1
-    assert(corruptedBits/int(len(__BITS)) < 0.02)
+    __assertBerLessThan(demodulatedBits, 0.02)
 
 def shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0():
     demodulatedBits = __modulateAndDemodulate(0)
-
-    corruptedBits = 0
-    for i in range(int(len(__BITS))):
-        if demodulatedBits[i] != __BITS[i]:
-            corruptedBits += 1
-    assert(corruptedBits/int(len(__BITS)) < 0.1)
+    __assertBerLessThan(demodulatedBits, 0.05)
 
 def shouldModulateAndDemodulateBitsWithoutErrorWhenHighAttenuationPresent():
     demodulatedBits = __modulateAndDemodulate(attenuation=10e6)

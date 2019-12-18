@@ -104,7 +104,7 @@ def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndHigherSamplingRate():
 
 def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndLowerSamplingRate():
     demodulatedBits = __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError=-0.001, offset=345, snr=10)
-    __assertBerLessThan(demodulatedBits, 0.005)
+    __assertBerLessThan(demodulatedBits, 0.002)
 
 ########################################################################################################################
 #       RUN ALL TESTS

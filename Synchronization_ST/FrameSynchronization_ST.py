@@ -50,7 +50,6 @@ def __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError, offs
 
     signal = modulator.modulate(__FRAME)
     transmittedSignal = channel.transmit(signal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr)
-
     dataPosition = frameSync.synchronizeFrame(transmittedSignal)
     transmittedSignal = transmittedSignal[dataPosition:]
     transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)

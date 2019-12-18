@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 
-def createBufferIn(self, data):
+def createBufferOut(self, data):
 bufferin = np.unpackbits(data).flatten()
  dataout = np.frombuffer(bufferin, dtype='S1')
 if len(dataout) % 2 != 0:

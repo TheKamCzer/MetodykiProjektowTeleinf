@@ -13,12 +13,9 @@ class TimingRecovery:
         I = np.real(inputData)
         Q = np.imag(inputData)
 
-        toRemove = []
-        toAdd = []
-        adap1 = 0
-        adap2 = 0
-        offset = 0
-        numOfWrongSamples = 0
+        toAdd, toRemove = [], []
+        adap1, adap2, offset, numOfWrongSamples = 0, 0, 0, 0
+
         for i in range(0, int(len(inputData) - 2 * self.symbolLength), self.symbolLength):
             actualIdx = i + offset
             nextIdx = actualIdx + self.symbolLength

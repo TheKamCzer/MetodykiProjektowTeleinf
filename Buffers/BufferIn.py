@@ -9,3 +9,4 @@ if len(datain) % 2 != 0:
             raise Exception('Data is uneven!')
             returnVal = []
             return ReturnVal
+#frame=headers+datain

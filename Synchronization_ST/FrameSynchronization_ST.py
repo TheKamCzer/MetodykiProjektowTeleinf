@@ -12,7 +12,7 @@ import numpy as np
 __HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
 __SEED = np.random.seed(283319)
-__BITS = np.random.randint(2, size=1000).tolist()
+__BITS = np.random.randint(2, size=2000).tolist()
 __FRAME = __HEADER + __BITS
 __SYMBOL_LENGTH_IN_BITS = 8
 __BUFFER_SIZE = 1024
@@ -104,7 +104,7 @@ def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndHigherSamplingRate():
 
 def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndLowerSamplingRate():
     demodulatedBits = __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError=-0.001, offset=345, snr=10)
-    __assertBerLessThan(demodulatedBits, 0.0001)
+    __assertBerLessThan(demodulatedBits, 0.005)
 
 ########################################################################################################################
 #       RUN ALL TESTS

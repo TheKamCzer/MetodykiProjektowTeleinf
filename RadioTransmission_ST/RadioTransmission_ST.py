@@ -8,7 +8,7 @@ import numpy as np
 #       CONSTANTS
 ########################################################################################################################
 
-__SEED = np.random.seed(238923)
+__SEED = np.random.seed(238924)
 __BITS = np.random.randint(2, size=200).tolist()
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 1

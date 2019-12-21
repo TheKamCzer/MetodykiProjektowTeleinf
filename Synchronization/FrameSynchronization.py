@@ -19,7 +19,7 @@ class FrameSynchronization:
         self.receivedHeader = inputData[dataPosition - self.headerLen : dataPosition]
         return dataPosition
 
-    def correctFreqAndPhase(self, inputSignal):
+    def correctFreqAndPhase(self, inputSignal): #TODO: Camcore95 - do sth when snr is less than 20 and check performance
         headerAutoCorr = np.multiply(self.receivedHeader[::self.symbolLength], np.conj(self.header[::self.symbolLength]))
         phi = np.angle(headerAutoCorr[round(self.headerLen / self.symbolLength / 2)])
         headerAutoCorr = headerAutoCorr * np.exp(-1j*phi)

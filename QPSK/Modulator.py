@@ -23,5 +23,5 @@ class Modulator:
         filteredQ = np.convolve(signalQ, self.psfFilter)
         signalQ = filteredQ[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
 
-        t = np.linspace(0, self.numOfPeriods / self.carrierFreq * N, self.symbolLength * N)
+        t = np.arange(0, N * self.symbolLength / self.sampleRate, 1 / self.sampleRate)
         return np.multiply(signalI, np.cos(2 * np.pi * self.carrierFreq * t + self.fi)) - 1j * np.multiply(signalQ, np.sin(2 * np.pi * self.carrierFreq * t + self.fi))

@@ -30,7 +30,7 @@ def __demodulateSignal(signal):
     return demodulator.demodulate(signal)
 
 def __modulateAndDemodulate(snr=None, attenuation=1):
-    channel = RadioChannel()
+    channel = RadioChannel(__SAMPLING_RATE)
     signal = __modulateSignal()
     transmittedSignal = channel.transmit(signal, snr, channelAttenuation=attenuation)
     return __demodulateSignal(transmittedSignal)

@@ -10,7 +10,7 @@ import numpy as np
 
 __SEED = np.random.seed(238923)
 __BITS = np.random.randint(2, size=2070).tolist()
-__SYMBOL_LENGTH_IN_BITS = 8
+__SYMBOL_LENGTH_IN_BITS = 32
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
 __FI = 0
@@ -26,7 +26,7 @@ def __transmitSignalWithTimingSynchronization(samplingErr):
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE,
                               __NUM_OF_PERIODS_IN_SYMBOL)
     timeRecover = TimingRecovery(__SYMBOL_LENGTH_IN_BITS)
-    channel = RadioChannel()
+    channel = RadioChannel(__SAMPLING_RATE)
 
     signal = modulator.modulate(__BITS)
     transmittedSignal = channel.transmit(signal, adcSamplingErr=samplingErr, snr=10)

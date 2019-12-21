@@ -13,7 +13,7 @@ class Demodulator:
 
     def demodulate(self, inputSignal):
         sigLen = int(len(inputSignal))
-        t = np.linspace(0, self.numOfPeriods * sigLen / self.carrierFreq / self.symbolLength, sigLen)
+        t = np.arange(0, sigLen / self.sampleRate, 1 / self.sampleRate)
         phase = 2 * np.pi * self.carrierFreq * t + self.fi
 
         branchI = np.convolve(np.real(inputSignal) * np.cos(phase), self.psfFilter)

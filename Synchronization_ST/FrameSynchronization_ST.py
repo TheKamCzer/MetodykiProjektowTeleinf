@@ -15,7 +15,7 @@ __END_HEADER = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
                 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
 __SEED = np.random.seed(283319)
 __BITS = np.random.randint(2, size=2000).tolist()
-__FRAME = __START_HEADER + __BITS
+__FRAME = __START_HEADER + __BITS + __END_HEADER
 __SYMBOL_LENGTH_IN_BITS = 8
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
@@ -38,9 +38,10 @@ def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LE
     transmittedSignal = channel.transmit(modulatedSignal, snr=snr, signalOffset=offset, freqErr=freqErr, phaseErr=phaseErr)
 
     dataPosition = frameSync.synchronizeStartHeader(transmittedSignal)
+    dataEndPosition = frameSync.synchronizeStopHeader(transmittedSignal)
     assert(dataPosition == expectedDataPosition + offset)
 
-    transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:])
+    transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:dataEndPosition])
     demodulatedBits = demodulator.demodulate(transmittedSignal)
     return demodulatedBits
 
@@ -55,7 +56,8 @@ def __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError, offs
     modulatedSignal = modulator.modulate(__FRAME)
     transmittedSignal = channel.transmit(modulatedSignal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr)
     dataPosition = frameSync.synchronizeStartHeader(transmittedSignal)
-    transmittedSignal = transmittedSignal[dataPosition:]
+    dataEndPosition = frameSync.synchronizeStopHeader(transmittedSignal)
+    transmittedSignal = transmittedSignal[dataPosition:dataEndPosition]
     transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)
 
     demodulatedBits = demodulator.demodulate(transmittedSignal)

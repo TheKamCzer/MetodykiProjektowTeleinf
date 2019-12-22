@@ -12,6 +12,8 @@ import time
 
 __HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
+__END_HEADER = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+                1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
 __SEED = np.random.seed(283319)
 __BITS = np.random.randint(2, size=4000).tolist()
 __FRAME = __HEADER + __BITS
@@ -30,7 +32,8 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     channel = RadioChannel(__SAMPLING_RATE)
-    frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    frameSync = FrameSynchronization(modulator.modulate(__HEADER), modulator.modulate(__END_HEADER),
+                                     __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
     timeRecover = TimingRecovery(__SYMBOL_LENGTH_IN_BITS)
 
     modulationStart = time.time()
@@ -44,7 +47,7 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
 
     synchronizationStart = time.time()
 
-    dataPosition = frameSync.synchronizeFrame(transmittedSignal)
+    dataPosition = frameSync.synchronizeStartHeader(transmittedSignal)
     transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:])
     transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)
 

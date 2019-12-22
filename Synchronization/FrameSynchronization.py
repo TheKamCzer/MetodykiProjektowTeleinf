@@ -2,25 +2,36 @@ import numpy as np
 
 
 class FrameSynchronization:
-    def __init__(self, header, symbolLength, samplingRate):
-        self.header = header
-        self.headerLen = int(len(self.header))
+    def __init__(self, startHeader, stopHeader, symbolLength, samplingRate):
+        self.startHeader = startHeader
+        self.stopHeader = stopHeader
+        self.headerLen = int(len(self.startHeader))
+        self.stopHeaderLen = int(len(self.stopHeader))
         self.symbolLength = symbolLength
-        self.autoCorrelation = np.multiply(self.header, np.conj(self.header))
-        self.autoCorrMean = np.mean(self.autoCorrelation)
+        self.startAutoCorrelation = np.multiply(self.startHeader, np.conj(self.startHeader))
+        self.startAutoCorrMean = np.mean(self.startAutoCorrelation)
+        self.stopAutoCorrelation = np.multiply(self.stopHeader, np.conj(self.stopHeader))
+        self.stopAutoCorrMean = np.mean(self.stopAutoCorrelation)
         self.samplingRate = samplingRate
         self.receivedHeader = []
 
-    def synchronizeFrame(self, inputData):
+    def synchronizeStartHeader(self, inputData):
         dataAutoCorr = np.multiply(inputData, np.conj(inputData))
         dataAutoCorrMean = np.mean(dataAutoCorr)
-        crossCorrelation = np.convolve(dataAutoCorr - dataAutoCorrMean, self.autoCorrelation[::-1] - self.autoCorrMean)
+        crossCorrelation = np.convolve(dataAutoCorr - dataAutoCorrMean, self.startAutoCorrelation[::-1] - self.startAutoCorrMean)
         dataPosition = np.argmax(abs(crossCorrelation)) + 1
         self.receivedHeader = inputData[dataPosition - self.headerLen : dataPosition]
         return dataPosition
 
+    def synchronizeStopHeader(self, inputData):
+        dataAutoCorr = np.multiply(inputData, np.conj(inputData))
+        dataAutoCorrMean = np.mean(dataAutoCorr)
+        crossCorrelation = np.convolve(dataAutoCorr - dataAutoCorrMean, self.stopAutoCorrelation[::-1] - self.stopAutoCorrMean)
+        dataPosition = np.argmax(abs(crossCorrelation)) + 1
+        return dataPosition - self.stopHeaderLen
+
     def correctFreqAndPhase(self, inputSignal): #TODO: Camcore95 - do sth when snr is less than 20
-        headerAutoCorr = np.multiply(self.receivedHeader[::self.symbolLength], np.conj(self.header[::self.symbolLength]))
+        headerAutoCorr = np.multiply(self.receivedHeader[::self.symbolLength], np.conj(self.startHeader[::self.symbolLength]))
         phi = np.angle(headerAutoCorr[round(self.headerLen / self.symbolLength / 2)])
         headerAutoCorr = headerAutoCorr * np.exp(-1j*phi)
         ang = np.unwrap(np.angle(headerAutoCorr))

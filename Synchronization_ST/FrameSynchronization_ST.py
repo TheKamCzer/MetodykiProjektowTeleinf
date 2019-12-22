@@ -4,6 +4,7 @@ from QPSK.Demodulator import Demodulator
 from RadioTransmission_ST.RadioChannel import RadioChannel
 from Synchronization.TimingRecovery import TimingRecovery
 import numpy as np
+from scipy import signal
 
 ########################################################################################################################
 #       CONSTANTS
@@ -24,32 +25,44 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 ########################################################################################################################
 #       FUNCTIONS
 ########################################################################################################################
-
+import matplotlib
+matplotlib.use('TkAgg')
+from pylab import *
 def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LENGTH_IN_BITS, snr=None, offset=0,
                                              freqErr=0, phaseErr=0):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     channel = RadioChannel(__SAMPLING_RATE)
     frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
 
-    signal = modulator.modulate(__FRAME)
-    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset, freqErr=freqErr, phaseErr=phaseErr)
+    modulatedSignal = modulator.modulate(__FRAME)
+    transmittedSignal = channel.transmit(modulatedSignal, snr=snr, signalOffset=offset, freqErr=freqErr, phaseErr=phaseErr)
+    psd(transmittedSignal)
+    grid()
+    fir = signal.firwin(199, [__CARRIER_FREQ * 0.6, __CARRIER_FREQ * 1.4], nyq=__SAMPLING_RATE * 0.5, pass_zero=False,
+                  window='hamming', scale=False)
+
     dataPosition = frameSync.synchronizeFrame(transmittedSignal)
     assert(dataPosition == expectedDataPosition + offset)
 
     transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:])
+    #transmittedSignal = np.convolve(transmittedSignal, fir)
+    #transmittedSignal = transmittedSignal[int(99): - 100]
+    #psd(fir)
+    #psd(transmittedSignal)
+    #show()
     demodulatedBits = demodulator.demodulate(transmittedSignal)
     return demodulatedBits
 
 def __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError, offset, snr=None):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     channel = RadioChannel(__SAMPLING_RATE)
     frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
     timeRecover = TimingRecovery(__SYMBOL_LENGTH_IN_BITS)
 
-    signal = modulator.modulate(__FRAME)
-    transmittedSignal = channel.transmit(signal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr)
+    modulatedSignal = modulator.modulate(__FRAME)
+    transmittedSignal = channel.transmit(modulatedSignal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr)
     dataPosition = frameSync.synchronizeFrame(transmittedSignal)
     transmittedSignal = transmittedSignal[dataPosition:]
     transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)
@@ -62,6 +75,7 @@ def __assertBerLessThan(signal, maxBer):
     for i in range(int(len(__BITS))):
         if signal[i] != __BITS[i]:
             corruptedBits += 1
+    print(corruptedBits / int(len(__BITS)))
     assert(corruptedBits / int(len(__BITS)) <= maxBer)
 
 
@@ -83,7 +97,7 @@ def shouldFindFrameWithSnr10AtTheBeginningOfStream():
 
 def shouldFindFrameWithSnr10InTheMiddleOfStream():
     demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, offset=242)
-    __assertBerLessThan(demodulatedBits, 0.08)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithSmallPhaseError():
     demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, phaseErr=np.pi/17)
@@ -94,11 +108,11 @@ def shouldFindFrameWithLargePhaseError():
     __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithSmallFreqError():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, freqErr=10e-4 * __CARRIER_FREQ)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=16, freqErr=10e-4 * __CARRIER_FREQ)
     __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithLargeFreqAndPhaseError():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=40, freqErr=-2*10e-4 * __CARRIER_FREQ, phaseErr=np.pi)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, freqErr=-2*10e-4 * __CARRIER_FREQ, phaseErr=np.pi)
     __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndHigherSamplingRate():

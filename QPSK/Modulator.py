@@ -4,11 +4,10 @@ from scipy import signal
 
 
 class Modulator:
-    def __init__(self, carrierFreq, symbolLength, fi, sampleRate, numOfPeriods):
+    def __init__(self, carrierFreq, symbolLength, fi, sampleRate):
         self.carrierFreq = carrierFreq
         self.symbolLength = symbolLength
         self.fi = fi
-        self.numOfPeriods = numOfPeriods
         self.sampleRate = sampleRate
         self.psfFilter = cp.rrcosfilter(int(self.symbolLength) * 10, 0.35, self.symbolLength / self.sampleRate, self.sampleRate)[1]
 

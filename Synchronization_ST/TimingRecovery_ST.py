@@ -22,9 +22,8 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 ########################################################################################################################
 
 def __transmitSignalWithTimingSynchronization(samplingErr):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE,
-                              __NUM_OF_PERIODS_IN_SYMBOL)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     timeRecover = TimingRecovery(__SYMBOL_LENGTH_IN_BITS)
     channel = RadioChannel(__SAMPLING_RATE)
 

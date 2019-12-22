@@ -40,7 +40,7 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
 
     modulatedSignal = modulator.modulate(__FRAME)
 
-    assert(time.time() - modulationStart < 1 / 20)
+    assert(time.time() - modulationStart < 1 / 25)
 
     transmittedSignal = channel.transmit(modulatedSignal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr,
                                          channelAttenuation=attenuation, freqErr=freqErr, phaseErr=phaseErr)
@@ -54,7 +54,7 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
 
     demodulatedBits = demodulator.demodulate(transmittedSignal)
 
-    assert (time.time() - synchronizationStart < 1 / 20)
+    assert (time.time() - synchronizationStart < 1 / 25)
     return demodulatedBits
 
 def __assertBerLessThan(signal, maxBer):

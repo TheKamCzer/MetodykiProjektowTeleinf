@@ -54,17 +54,8 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
 
     demodulatedBits = demodulator.demodulate(transmittedSignal)
 
-    print(time.time() - synchronizationStart)
     assert (time.time() - synchronizationStart < 1 / 25)
     return demodulatedBits
-
-def __assertBerLessThan(signal, maxBer):
-    corruptedBits = 0
-    for i in range(int(len(__BITS))):
-        if signal[i] != __BITS[i]:
-            corruptedBits += 1
-    print(corruptedBits / int(len(__BITS)))
-    assert(corruptedBits / int(len(__BITS)) <= maxBer)
 
 
 ########################################################################################################################

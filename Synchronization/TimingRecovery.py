@@ -42,4 +42,4 @@ class TimingRecovery:
 
         inputData = np.delete(inputData, toRemove)
         inputData = np.insert(inputData, toAdd, 0)
-        return inputData
+        return inputData[:int(round(len(inputData) / self.symbolLength)) * self.symbolLength]

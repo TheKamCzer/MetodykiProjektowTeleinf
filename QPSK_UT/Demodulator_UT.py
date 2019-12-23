@@ -75,12 +75,12 @@ def __calcSignalPower(signal):
 ########################################################################################################################
 
 def shouldDemodulateInputBits():
-    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE)
     signal = __calcSignal()
     assert(dem.demodulate(signal) == __OUTPUT_BITS)
 
 def shouldDemodulateMostOfInputBitsWithNoise():
-    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE)
     signal = __calcSignal()
 
     noise = np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal) + 1j * np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal)

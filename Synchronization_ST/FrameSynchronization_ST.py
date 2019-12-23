@@ -84,8 +84,8 @@ def shouldFindFrameWithoutNoiseInTheMiddleOfStream():
     assert(demodulatedBits == __BITS)
 
 def shouldFindFrameWithSnr10AtTheBeginningOfStream():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=10)
-    __assertBerLessThan(demodulatedBits, 0.05)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=15)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithSnr10InTheMiddleOfStream():
     demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, offset=242)

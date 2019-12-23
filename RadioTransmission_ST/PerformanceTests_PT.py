@@ -63,7 +63,7 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
 ########################################################################################################################
 
 def shouldDemodulateSignalProperly():
-    demodulatedBits = __transmitSignal(offset=131, attenuation=10, samplingError=3*10e-6, freqErr=10e-4*__CARRIER_FREQ,
+    demodulatedBits = __transmitSignal(offset=131, attenuation=10, samplingError=3 * 10e-6, freqErr=10e-4*__CARRIER_FREQ,
                                        phaseErr=np.pi/17, snr=40)
     assert(demodulatedBits == __BITS)
 

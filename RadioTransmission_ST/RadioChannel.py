@@ -5,6 +5,7 @@ from scipy import interpolate as inter
 class RadioChannel:
     def __init__(self, samplingRate):
         self.samplingRate = samplingRate
+        self.samplingTime = 1 / self.samplingRate
 
     def __calcSignalPow(self, signal):
         sigPow = 0
@@ -20,9 +21,10 @@ class RadioChannel:
             inputSignal += noise
 
         for i in range(signalOffset):
-            inputSignal = np.insert(inputSignal, 0, np.random.normal(0, 1, 1))
+            inputSignal = np.insert(inputSignal, 0, np.random.normal(0, 1, 1) + 1j * np.random.normal(0, 1, 1))
+            inputSignal = np.insert(inputSignal, int(len(inputSignal)), np.random.normal(0, 1, 1) + 1j * np.random.normal(0, 1, 1))
 
-        t = np.arange(0, int(len(inputSignal)) / self.samplingRate, 1 / self.samplingRate)
+        t = np.arange(0, int(len(inputSignal)) * self.samplingTime,  self.samplingTime)
         inputSignal = inputSignal * 1 / channelAttenuation * np.exp(1j * (2 * np.pi * freqErr * t + phaseErr))
 
         if adcSamplingErr is not None and adcSamplingErr <= 1:

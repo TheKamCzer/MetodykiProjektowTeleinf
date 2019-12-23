@@ -22,15 +22,15 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 ########################################################################################################################
 
 def __modulateSignal():
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     return modulator.modulate(__BITS)
 
 def __demodulateSignal(signal):
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
     return demodulator.demodulate(signal)
 
 def __modulateAndDemodulate(snr=None, attenuation=1):
-    channel = RadioChannel()
+    channel = RadioChannel(__SAMPLING_RATE)
     signal = __modulateSignal()
     transmittedSignal = channel.transmit(signal, snr, channelAttenuation=attenuation)
     return __demodulateSignal(transmittedSignal)

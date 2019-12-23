@@ -48,12 +48,13 @@ def __transmitSignal(samplingError, offset, snr, attenuation, freqErr, phaseErr)
     synchronizationStart = time.time()
 
     dataPosition = frameSync.synchronizeStartHeader(transmittedSignal)
-    dataEndPosition = frameSync.synchronizeStopHeader(transmittedSignal)
-    transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:dataEndPosition])
+    dataEndPosition = frameSync.synchronizeStopHeader(transmittedSignal[dataPosition:])
+    transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:dataPosition + dataEndPosition])
     transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)
 
     demodulatedBits = demodulator.demodulate(transmittedSignal)
 
+    print(time.time() - synchronizationStart)
     assert (time.time() - synchronizationStart < 1 / 25)
     return demodulatedBits
 

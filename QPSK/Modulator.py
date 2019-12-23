@@ -10,6 +10,7 @@ class Modulator:
         self.fi = fi
         self.sampleRate = sampleRate
         self.psfFilter = cp.rrcosfilter(int(self.symbolLength) * 10, 0.35, self.symbolLength / self.sampleRate, self.sampleRate)[1]
+        self.sampleTime = 1 / self.sampleRate
 
     def modulate(self, bitsToModulate):
         bitsToModulate = [1 if x > 0 else -1 for x in bitsToModulate]
@@ -22,5 +23,5 @@ class Modulator:
         filteredQ = np.convolve(signalQ, self.psfFilter)
         signalQ = filteredQ[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]
 
-        t = np.arange(0, N * self.symbolLength / self.sampleRate, 1 / self.sampleRate)
+        t = np.arange(0, N * self.symbolLength * self.sampleTime, self.sampleTime)
         return np.multiply(signalI, np.cos(2 * np.pi * self.carrierFreq * t + self.fi)) - 1j * np.multiply(signalQ, np.sin(2 * np.pi * self.carrierFreq * t + self.fi))

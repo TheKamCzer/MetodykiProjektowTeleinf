@@ -8,11 +8,12 @@ class Demodulator:
         self.symbolLength = symbolLength
         self.fi = fi
         self.sampleRate = sampleRate
+        self.sampleTime = 1 / self.sampleRate
         self.psfFilter = cp.rrcosfilter(int(self.symbolLength) * 10 , 0.35, self.symbolLength / self.sampleRate, self.sampleRate)[1]
 
     def demodulate(self, inputSignal):
         sigLen = int(len(inputSignal))
-        t = np.arange(0, sigLen / self.sampleRate, 1 / self.sampleRate)
+        t = np.arange(0, sigLen * self.sampleTime, self.sampleTime)
         phase = 2 * np.pi * self.carrierFreq * t + self.fi
 
         branchI = np.convolve(np.real(inputSignal) * np.cos(phase), self.psfFilter)

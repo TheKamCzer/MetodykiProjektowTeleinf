@@ -13,13 +13,11 @@ __START_HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
                   0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
 __END_HEADER = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
                 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
-__SEED = np.random.seed(283319)
 __BITS = np.random.randint(2, size=2000).tolist()
 __FRAME = __START_HEADER + __BITS + __END_HEADER
 __SYMBOL_LENGTH_IN_BITS = 8
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
-__FI = 0
 __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 
 
@@ -28,8 +26,8 @@ __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN
 ########################################################################################################################
 def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LENGTH_IN_BITS, snr=None, offset=0,
                                              freqErr=0, phaseErr=0):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
     channel = RadioChannel(__SAMPLING_RATE)
     frameSync = FrameSynchronization(modulator.modulate(__START_HEADER), modulator.modulate(__END_HEADER),
                                      __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
@@ -46,8 +44,8 @@ def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LE
     return demodulatedBits
 
 def __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError, offset, snr=None):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
     channel = RadioChannel(__SAMPLING_RATE)
     frameSync = FrameSynchronization(modulator.modulate(__START_HEADER), modulator.modulate(__END_HEADER),
                                      __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
@@ -121,6 +119,7 @@ def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndLowerSamplingRate():
 ########################################################################################################################
 
 def run():
+    np.random.seed(283319)
     shouldFindFrameWithoutNoiseAtTheBeginningOfStream()
     shouldFindFrameWithoutNoiseInTheMiddleOfStream()
     shouldFindFrameWithSnr10AtTheBeginningOfStream()

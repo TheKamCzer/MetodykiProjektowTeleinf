@@ -5,6 +5,7 @@ from Synchronization.FrameSynchronization import FrameSynchronization
 from QPSK.Modulator import Modulator
 from QPSK.Demodulator import Demodulator
 from Synchronization.TimingRecovery import TimingRecovery
+import numpy as np
 
 class Receiver:
     def __init__(self, sampleRate, carrierFreq, symbolLength, frameSize):
@@ -31,13 +32,17 @@ class Receiver:
         self.rtlSamples = Queue()
         self.frames = Queue()
         self.previousData = Queue(1)
+        self.previousData.put([0])
         self.data = Queue()
 
         self.threads = []
         self.threads.append(threading.Thread(target=self.receive))
-        #self.threads.append( threading.Thread(target=self.findFrame, args=(self.queueRfIQ, self.queueAudio, )) )
-        #self.threads.append( threading.Thread(target=self.processData, args=(self.queueAudio, self.queueCommandsSpeaker, )) )
-        #self.threads.append( threading.Thread(target=self.playSound))
+        self.threads.append(threading.Thread(target=self.findFrame))
+        self.threads.append(threading.Thread(target=self.processData))
+        self.threads.append(threading.Thread(target=self.playSound))
+
+        for th in self.threads:
+            th.start()
 
     def receive(self):
         def rtl_callback(samples, rtlsdr_obj):
@@ -45,3 +50,26 @@ class Receiver:
 
         self.rtl.read_samples_async(rtl_callback, self.sampleRate/10)
 
+    def findFrame(self):
+        currentData = self.rtlSamples.get()
+        prevData = self.previousData.get()
+        data = np.append(prevData, currentData)
+
+        dataPosition = self.frameSync.synchronizeStartHeader(data)
+        dataEndPosition = self.frameSync.synchronizeStopHeader(data[dataPosition:]) #TODO: add some validation and print
+
+        self.previousData.put(currentData)
+        self.frames.put(data[dataPosition:dataPosition + dataEndPosition])
+
+    def processData(self):
+        data = self.frames.get()
+
+        data = self.frameSync.correctFreqAndPhase(data)
+        data = self.timeRecover.synchronizeTiming(data)
+        data = self.demodulator.demodulate(data)
+
+        self.data.put(data)
+
+    def playSound(self):
+        #TODO: write func
+        return

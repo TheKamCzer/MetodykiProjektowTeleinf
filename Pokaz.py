@@ -13,7 +13,7 @@ sample_format = pyaudio.paInt16  # 16 bits per sample
 channels = 2
 fs = 44100  # Record at 44100 samples per second
 seconds = 3
-filename = "/Users/marcingadek/PycharmProjects/MetodykiProjektowTeleinf/Record_Play/myfile.wav"
+filename = "Record_Play/myfile.wav"
 p = pyaudio.PyAudio()  # Create an interface to PortAudio
 
 stream = p.open(format=sample_format,

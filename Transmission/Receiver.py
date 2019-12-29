@@ -12,7 +12,7 @@ class Receiver:
         self.sampleRate = sampleRate
         self.carrierFreq = carrierFreq
         self.symbolLength = symbolLength
-        self.frameSize = frameSize
+        self.frameSizeInBits = frameSize * 8 / 2
         self.headerStart = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
                             0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
         self.headerEnd = [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1,
@@ -56,10 +56,15 @@ class Receiver:
         data = np.append(prevData, currentData)
 
         dataPosition = self.frameSync.synchronizeStartHeader(data)
-        dataEndPosition = self.frameSync.synchronizeStopHeader(data[dataPosition:]) #TODO: add some validation and print
+        dataEndPosition = self.frameSync.synchronizeStopHeader(data[dataPosition:])
 
-        self.previousData.put(currentData)
-        self.frames.put(data[dataPosition:dataPosition + dataEndPosition])
+        if abs(dataEndPosition - self.frameSizeInBits) <= self.frameSizeInBits/10:
+            print("Frame found. Size = " + str(dataEndPosition))
+
+            self.previousData.put(data[dataPosition + dataEndPosition:])
+            self.frames.put(data[dataPosition:dataPosition + dataEndPosition])
+        else:
+            self.previousData.put(currentData)
 
     def processData(self):
         data = self.frames.get()
@@ -71,5 +76,6 @@ class Receiver:
         self.data.put(data)
 
     def playSound(self):
+        dataToPlay = self.data.get()
         #TODO: write func
         return

@@ -1,2 +1,7 @@
 */__pycache__/*
 *.code-workspace
+QAM_UT/*.log
+QAM_UT/*.svg
+QAM_UT/setup.py
+QAM_UT/testCython.py
+build/*

@@ -56,6 +56,9 @@ class ModulatorQAM:
         """
 
         __BITS_PER_SYMBOL = 4
+        # flatting array allows working with input data that comes directly
+        # from pyAudio as well as made up in unitest 
+        bitsToModulate = np.ndarray.flatten(bitsToModulate)
 
         bitsLength = len(bitsToModulate)
 
@@ -128,9 +131,7 @@ class ModulatorQAM:
                 axs1[1].set_ylabel('value')
                 plt.show()
 
-            # TODO: create plot
-
             return modSig
 
-        print("a")
+        # print("a")
         #  =

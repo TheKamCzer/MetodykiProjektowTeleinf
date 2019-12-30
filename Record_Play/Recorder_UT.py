@@ -17,10 +17,12 @@ __NUM_OF_CHANNLES = 1
 __SAMPLING_RATE = 44100
 
 
-rec = Recorder(input_device_index=0, frames_per_buffer=__FRAMES_PER_BUFFER,
+rec = Recorder(input_device_index=7, frames_per_buffer=__FRAMES_PER_BUFFER,
                sample_format=__SAMPLE_FORMAT, channels=__NUM_OF_CHANNLES, bit_rate=__SAMPLING_RATE)
 
 print('Openning stream')
+
+print(rec.get_mic_info())
 
 rec.start()
 

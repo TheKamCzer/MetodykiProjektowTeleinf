@@ -15,8 +15,8 @@ class Modulator:
     def modulate(self, bitsToModulate):
         bitsToModulate = [1 if x > 0 else -1 for x in bitsToModulate]
         N = int(len(bitsToModulate) / 2)
-        signalI = signal.upfirdn([1], bitsToModulate[0::2], self.symbolLength)
-        signalQ = signal.upfirdn([1], bitsToModulate[1::2], self.symbolLength)
+        signalI = signal.upfirdn([1]*self.symbolLength, bitsToModulate[0::2], self.symbolLength)
+        signalQ = signal.upfirdn([1]*self.symbolLength, bitsToModulate[1::2], self.symbolLength)
 
         filteredI = np.convolve(signalI, self.psfFilter)
         signalI = filteredI[int(self.symbolLength * 5): - int(self.symbolLength * 5) + 1]

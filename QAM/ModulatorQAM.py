@@ -5,6 +5,7 @@ Implementation of QAM modulation.
 import numpy as np
 import commpy as cp
 from scipy import signal
+import matplotlib.pyplot as plt
 
 
 class ModulatorQAM:
@@ -17,6 +18,7 @@ class ModulatorQAM:
         self.psfFilter = cp.rrcosfilter(int(
             self.upsamplingFactor) * 10, 0.35, self.upsamplingFactor / self.sampleRate, self.sampleRate)[1]
         self.sampleTime = 1 / self.sampleRate
+        self.currentTime = 0
         self._MAPPING_TABLE_QAM16 = {
             (0, 0, 0, 0): -3-3j,
             (0, 0, 0, 1): -3-1j,
@@ -36,10 +38,16 @@ class ModulatorQAM:
             (1, 1, 1, 1):  1+1j
         }
 
-    def __get_timebase(self):
-        yeld[69]
+    def __get_timebase(self, requiredLength: int):
 
-    def modulateQAM16(self, bitsToModulate, isSignalUpconverted=False, debug=False):
+        __BITS_PER_SYMBOL = 4
+        t = np.arange(self.currentTime,
+                      requiredLength*self.sampleTime,
+                      self.sampleTime, )
+        self.currentTime = t[-1]+self.sampleTime
+        return t
+
+    def modulateQAM16(self, bitsToModulate, isSignalUpconverted=True, debug=False):
         """
         Returns complex modulated signal.
         Can be called multiple times because it keeps track
@@ -99,10 +107,30 @@ class ModulatorQAM:
             axs0[1][1].set_ylabel('value')
             plt.show()
 
-        if isSignalUpconverted==True:
-            pass
+        if isSignalUpconverted == False:
+            # return baseband signal. Used in communication with PLUTO without IF frequency
+            return np.add(signalIFilt, 1j*signalQFilt, dtype=np.complex128)
         else:
-            pass
+            t = self.__get_timebase(len(signalI))
+            modSig = np.add(np.multiply(signalIFilt, np.cos(2 * np.pi * self.carrierFreq * t + self.fi)),
+                            1j * np.multiply(signalQFilt, np.sin(2 *
+                                                                 np.pi * self.carrierFreq * t + self.fi)))
+            if debug == True:
+                fig1, axs1 = plt.subplots(2, 1, constrained_layout=True)
+                fig1.suptitle('Upconverted symbols', fontsize=16)
+                axs1[0].plot(np.real(modSig))
+                axs1[0].set_title('I component')
+                axs1[0].set_xlabel('sample')
+                axs1[0].set_ylabel('value')
+                axs1[1].plot(np.imag(modSig))
+                axs1[1].set_title('Q component')
+                axs1[1].set_xlabel('sample')
+                axs1[1].set_ylabel('value')
+                plt.show()
+
+            # TODO: create plot
+
+            return modSig
 
         print("a")
         #  =

@@ -22,11 +22,13 @@ __INPUT_BITS = [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1,
                 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1,
                 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1]
 
-__CARRIER_FREQ = 10e3
+# TODO: optimize IF frequency and sampleRate
+__CARRIER_FREQ = 10e5
 
 
 mod = ModulatorQAM(carrierFreq=__CARRIER_FREQ,
-                   upsamplingFactor=8, sampleRate=20e6)
+                   upsamplingFactor=8, sampleRate=20e6, )
 
-mod.modulateQAM16(__INPUT_BITS)
+result = mod.modulateQAM16(__INPUT_BITS, isSignalUpconverted=True, debug=True)
 
+print("aaa")

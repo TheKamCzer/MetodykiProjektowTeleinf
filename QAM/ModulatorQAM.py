@@ -39,7 +39,7 @@ class ModulatorQAM:
     def __get_timebase(self):
         yeld[69]
 
-    def modulateQAM16(self, bitsToModulate, isSignalUpconverted=False):
+    def modulateQAM16(self, bitsToModulate, isSignalUpconverted=False, debug=False):
         """
         Returns complex modulated signal.
         Can be called multiple times because it keeps track
@@ -62,8 +62,42 @@ class ModulatorQAM:
         symbolsQAM16 = np.array(
             [self._MAPPING_TABLE_QAM16[tuple(b)] for b in bitsGroupped])
 
-        signalI = signal.upfirdn([1]*self.upsamplingFactor, np.real(symbolsQAM16), self.upsamplingFactor)
-        signalQ = signal.upfirdn([1]*self.upsamplingFactor, np.imag(symbolsQAM16), self.upsamplingFactor)
+        # upconvert signals
+        signalI = signal.upfirdn(
+            [1]*self.upsamplingFactor, np.real(symbolsQAM16), self.upsamplingFactor)
+        signalQ = signal.upfirdn(
+            [1]*self.upsamplingFactor, np.imag(symbolsQAM16), self.upsamplingFactor)
+
+        # apply raised cosine shaped filter
+        # scalingFactor = sum(np.abs(self.psfFilter))
+        filteredI = np.convolve(signalI, self.psfFilter)  # /scalingFactor
+        filteredQ = np.convolve(signalQ, self.psfFilter)  # /scalingFactor
+        # removing initial and last samples that where introduced by convolution
+        signalIFilt = filteredI[int(
+            self.upsamplingFactor * 5): - int(self.upsamplingFactor * 5) + 1]
+        signalQFilt = filteredQ[int(
+            self.upsamplingFactor * 5): - int(self.upsamplingFactor * 5) + 1]
+
+        if debug == True:
+            fig0, axs0 = plt.subplots(2, 2, constrained_layout=True)
+            fig0.suptitle('Symbols', fontsize=16)
+            axs0[0][0].plot(signalI)
+            axs0[0][0].set_title('I - before filtration')
+            axs0[0][0].set_xlabel('sample')
+            axs0[0][0].set_ylabel('value')
+            axs0[0][1].plot(signalQ)
+            axs0[0][1].set_title('Q - before filtration')
+            axs0[0][1].set_xlabel('sample')
+            axs0[0][1].set_ylabel('value')
+            axs0[1][0].plot(signalIFilt)
+            axs0[1][0].set_title('I - after filtration')
+            axs0[1][0].set_xlabel('sample')
+            axs0[1][0].set_ylabel('value')
+            axs0[1][1].plot(signalQFilt)
+            axs0[1][1].set_title('Q - after filtration')
+            axs0[1][1].set_xlabel('sample')
+            axs0[1][1].set_ylabel('value')
+            plt.show()
 
         if isSignalUpconverted==True:
             pass

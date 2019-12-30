@@ -1,33 +1,37 @@
-import pyaudio
+
+import time
 from Record_Play.Recorder import Recorder
+from pyaudio import paInt16
 
 ####################
-#CONSTANTS
+# CONSTANTS
 ####################
 
-
-chunk = 1024  # Record in chunks of 1024 samples
-sample_format = pyaudio.paInt16  # 16 bits per sample
-channels = 2
-fs = 44100  # Record at 44100 samples per second
-seconds = 3
-# filename = "outputfile1.wav"
-filename = "/Users/marcingadek/PycharmProjects/MetodykiProjektowTeleinf/Record_Play/outputfile1.wav"
-p = pyaudio.PyAudio()  # Create an interface to PortAudio
-
-print('Recording')
-
-stream = p.open(format=sample_format,
-                channels=channels,
-                rate=fs,
-                frames_per_buffer=chunk,
-                input=True)
+# record in chunks of 1024 samples
+__FRAMES_PER_BUFFER = 1024
+# 16 bits per sample
+__SAMPLE_FORMAT = paInt16
+#
+__NUM_OF_CHANNLES = 1
+# Record at 44100 samples per second
+__SAMPLING_RATE = 44100
 
 
-def shouldRecords():
-    recorder = Recorder(chunk, sample_format, channels, fs, seconds, p, stream, filename)
+rec = Recorder(input_device_index=0, frames_per_buffer=__FRAMES_PER_BUFFER,
+               sample_format=__SAMPLE_FORMAT, channels=__NUM_OF_CHANNLES, bit_rate=__SAMPLING_RATE)
 
-    ssss = recorder.record()
-    return ssss
+print('Openning stream')
 
+rec.start()
 
+frame_number = 0
+while not rec.isEmpty():
+    print("Frame number: " + str(frame_number))
+    frame_number += frame_number
+    data = rec.get_data()
+    print(data)
+
+    if frame_number==32:
+        break
+
+rec.exit()

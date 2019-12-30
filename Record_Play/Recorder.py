@@ -1,37 +1,76 @@
 import pyaudio
-import wave
+import queue
 
 
 class Recorder:
-    def __init__(self, chunk, sample_format, channels, fs, seconds, p, stream, filename):
-        self.chunk = chunk
+    def __init__(self, input_device_index=5, frames_per_buffer=1024,
+                 sample_format=pyaudio.paInt16, channels=1, bit_rate=44100):
+
+        self.queue = queue.Queue(16)
+        self.p = pyaudio.PyAudio()
+        self.input_device_index = input_device_index
+        self.frames_per_buffer = frames_per_buffer
         self.sample_format = sample_format
         self.channels = channels
-        self.fs = fs
-        self.seconds = seconds
-        self.p = p
-        self.stream = stream
-        self.filename = filename
+        self.bit_rate = bit_rate
 
-    def record(self):
-        frames = []
-        for i in range(0, int(self.fs / self.chunk * self.seconds)):
-            data = self.stream.read(self.chunk, exception_on_overflow=False)
-            frames.extend(data)
+    def get_mic_info(self):
+        """
+        Function prints avaliable input devices (microphones) and
+        its indices.
+        """
+        info = self.p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (self.p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                print("Input Device id ", i, " - ",
+                      self.p.get_device_info_by_host_api_device_index(0, i).get('name'))
 
-        # Stop and close the stream
-        self.stream.stop_stream()
+    def start(self):
+        """
+        Starting mic stream in non-blocking mode
+        """
+        print("Starting pyAudio mic")
+        self.stream = self.p.open(
+            format=self.sample_format,
+            input_device_index=self.input_device_index,
+            channels=self.channels,
+            rate=self.bit_rate,
+            frames_per_buffer=self.frames_per_buffer,
+            input=True,
+            output=False,
+            stream_callback=self.callback)
+
+    def callback(self, in_data, frame_count, time_info, status):
+        """
+        Function which is invoked every time new data frame
+        from audio subsystem arrives
+        """
+        if not self.queue.full():
+            self.queue.put(in_data)
+        else:
+            raise ValueError("Microphone buffer overrun")
+        return (in_data, pyaudio.paContinue)
+
+    def isEmpty(self):
+        """
+        Checks whether queue is empty
+        """
+        return self.queue.qsize == 0
+
+    def get_data(self):
+        """
+        Retives data from queue. Queue has to be non-empy, 
+        otherwise exception will be thrown
+
+        Check it in logic by using isEmpty() method.
+        """
+        assert self.isEmpty(), "You can't get data from empty queue"
+
+        data = self.queue.get()
+        self.queue.task_done()
+        return data
+
+    def exit(self):
+        print("Exiting pyAudio microphone stream")
         self.stream.close()
-        # Terminate the PortAudio interface
-        self.p.terminate()
-
-        print('Finished recording')
-
-        # Save the recorded data as a WAV file
-        # wf = wave.open(self.filename, 'wb')
-        # wf.setnchannels(self.channels)
-        # wf.setsampwidth(self.p.get_sample_size(self.sample_format))
-        # wf.setframerate(self.fs)
-        # wf.writeframes(b''.join(self.frames))
-        # wf.close()
-        return frames

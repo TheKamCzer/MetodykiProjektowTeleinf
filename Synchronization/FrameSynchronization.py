@@ -13,13 +13,14 @@ class FrameSynchronization:
         self.stopAutoCorrelation = np.multiply(self.stopHeader, np.conj(self.stopHeader))
         self.stopAutoCorrMean = np.mean(self.stopAutoCorrelation)
         self.samplingRate = samplingRate
+        self.samplingTime = 1 / self.samplingRate
         self.receivedHeader = []
 
     def synchronizeStartHeader(self, inputData):
         dataAutoCorr = np.multiply(inputData, np.conj(inputData))
         dataAutoCorrMean = np.mean(dataAutoCorr)
         crossCorrelation = np.convolve(dataAutoCorr - dataAutoCorrMean, self.startAutoCorrelation[::-1] - self.startAutoCorrMean)
-        dataPosition = np.argmax(abs(crossCorrelation)) + 1
+        dataPosition = np.argmax(crossCorrelation) + 1
         self.receivedHeader = inputData[dataPosition - self.headerLen : dataPosition]
         return dataPosition
 
@@ -38,6 +39,6 @@ class FrameSynchronization:
         temp = np.polyfit(np.arange(0, self.headerLen / self.samplingRate, self.symbolLength / self.samplingRate), ang, 1)
         dph = temp[1] + phi
         df = temp[0] / (2 * np.pi)
-        t = np.arange(0, int(len(inputSignal)) / self.samplingRate, 1 / self.samplingRate)
+        t = np.arange(0, int(len(inputSignal)) * self.samplingTime, self.samplingTime)
         inputSignal = inputSignal * np.exp(-1j * (2 * np.pi * df * t + dph))
         return inputSignal

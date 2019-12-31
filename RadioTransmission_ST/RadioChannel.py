@@ -1,5 +1,7 @@
 import numpy as np
+from scipy import signal as sig
 from scipy import interpolate as inter
+from matplotlib import pyplot as plt
 
 
 class RadioChannel:
@@ -14,7 +16,34 @@ class RadioChannel:
         sigPow /= int(len(signal))
         return sigPow
 
-    def transmit(self, inputSignal, snr=None, signalOffset=0, channelAttenuation=1, freqErr=0, phaseErr=0, adcSamplingErr=None):
+    def upConversion(self, signal, carrierFreq):
+        n = np.arange(0, int(len(signal)))
+        plt.subplot(2, 1, 1)
+        phase = 2 * np.pi * carrierFreq/(self.samplingRate/2) * n
+        plt.psd(signal, NFFT=len(phase), Fs=self.samplingRate, scale_by_freq=True)
+        # plt.magnitude_spectrum(signal)
+        # signal1 = np.multiply(np.real(signal), np.cos(phase)) - np.multiply(np.imag(signal), np.sin(phase))
+        signal1 = np.multiply(0.5*signal, np.exp(1j*phase))
+        plt.subplot(2, 1, 2)
+        plt.magnitude_spectrum(signal1)
+        plt.psd(signal1, NFFT=len(phase), scale_by_freq=True, Fs=self.samplingRate/2)
+        plt.show()
+        return signal1
+
+    def downConversion(self, signal, carrierFrequency):
+        phase = (2 * np.pi * carrierFrequency/self.samplingRate) * np.arange(0, int(len(signal)))
+        numOfProb = 250
+
+        fir = sig.firwin(numOfProb, carrierFrequency/(self.samplingRate/2), nyq=self.samplingRate * 0.5, pass_zero=False, window='hamming', scale=False)
+        signal = np.convolve(signal, fir)
+        signal1 = signal[numOfProb/2 + 1: len(signal) - numOfProb/2]
+        result = np.multiply(2*signal1, np.exp(-1j*phase))
+        return result
+
+    def transmit(self, inputSignal, snr=None, carrFreq=None, signalOffset=0, channelAttenuation=1, freqErr=0, phaseErr=0, adcSamplingErr=None):
+        if carrFreq is not None:
+            inputSignal = self.upConversion(inputSignal, carrFreq)
+
         if snr is not None:
             noise = np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)\
                 + 1j * np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)
@@ -31,5 +60,8 @@ class RadioChannel:
             interpFunc = inter.interp1d(t, inputSignal, kind='cubic')
             newT = np.arange(abs(adcSamplingErr) / (self.samplingRate * (1 + adcSamplingErr)), int(len(inputSignal) - 1) / self.samplingRate, 1 / (self.samplingRate * (1 + adcSamplingErr)))
             inputSignal = interpFunc(newT)
+
+        if carrFreq is not None:
+            inputSignal = self.downConversion(inputSignal, carrFreq)
 
         return inputSignal

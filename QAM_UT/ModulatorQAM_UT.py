@@ -167,10 +167,10 @@ def __qam16_stationary_data():
     result0 = mod0.modulateQAM16(__INPUT_BITS, isSignalUpconverted=True, debug=True)
 
 def __qam16_random_data():
-    unpackedRandomBits = __unpackbits(__RANDOM_1024_INT16, 16)
+    # unpackedRandomBits = __unpackbits(__RANDOM_1024_INT16, 16)
     mod1 = ModulatorQAM(carrierFreq=__CARRIER_FREQ,
                     upsamplingFactor=8, sampleRate=20e6,fi=0 )
-    result1 = mod1.modulateQAM16(unpackedRandomBits, isSignalUpconverted=True, debug=False)
+    result1 = mod1.modulateQAM16(__RANDOM_1024_INT16.tobytes(), isSignalUpconverted=True, debug=True)
   
 
 

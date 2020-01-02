@@ -2,6 +2,7 @@ import numpy as np
 from scipy import signal as sig
 from scipy import interpolate as inter
 from matplotlib import pyplot as plt
+import commpy as cp
 
 
 class RadioChannel:
@@ -17,27 +18,30 @@ class RadioChannel:
         return sigPow
 
     def upConversion(self, signal, carrierFreq):
-        n = np.arange(0, int(len(signal)))
+        n = np.arange(0, int(len(signal)-1))
         plt.subplot(2, 1, 1)
-        phase = 2 * np.pi * carrierFreq/(self.samplingRate/2) * n
-        plt.psd(signal, NFFT=len(phase), Fs=self.samplingRate, scale_by_freq=True)
+        phase = 2 * np.pi * carrierFreq/self.samplingRate * n
+        plt.psd(signal, Fs=self.samplingRate)
         # plt.magnitude_spectrum(signal)
         # signal1 = np.multiply(np.real(signal), np.cos(phase)) - np.multiply(np.imag(signal), np.sin(phase))
-        signal1 = np.multiply(0.5*signal, np.exp(1j*phase))
+        signal1 = np.multiply(0.5*signal[:len(n)], np.exp(1j*phase))
         plt.subplot(2, 1, 2)
-        plt.magnitude_spectrum(signal1)
-        plt.psd(signal1, NFFT=len(phase), scale_by_freq=True, Fs=self.samplingRate/2)
+        # plt.magnitude_spectrum(signal1)
+        plt.psd(signal1, Fs=self.samplingRate)
         plt.show()
         return signal1
 
     def downConversion(self, signal, carrierFrequency):
         phase = (2 * np.pi * carrierFrequency/self.samplingRate) * np.arange(0, int(len(signal)))
-        numOfProb = 250
+        result = np.multiply(2 * signal, np.exp(-1j * phase))
 
-        fir = sig.firwin(numOfProb, carrierFrequency/(self.samplingRate/2), nyq=self.samplingRate * 0.5, pass_zero=False, window='hamming', scale=False)
-        signal = np.convolve(signal, fir)
-        signal1 = signal[numOfProb/2 + 1: len(signal) - numOfProb/2]
-        result = np.multiply(2*signal1, np.exp(-1j*phase))
+        numOfProb = 250
+        fir = cp.rrcosfilter(numOfProb, 0.35, self.samplingTime, self.samplingRate)[1]
+            # sig.firwin(numOfProb, [0.25, 0.75], nyq=self.samplingRate * 0.5, pass_zero=False, window='hamming', scale=False)
+
+        signal = np.convolve(result, fir)
+        signal1 = signal[: int(len(phase))]
+
         return result
 
     def transmit(self, inputSignal, snr=None, carrFreq=None, signalOffset=0, channelAttenuation=1, freqErr=0, phaseErr=0, adcSamplingErr=None):

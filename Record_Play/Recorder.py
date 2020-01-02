@@ -5,8 +5,8 @@ import queue
 class Recorder:
     def __init__(self, input_device_index=5, frames_per_buffer=1024,
                  sample_format=pyaudio.paInt16, channels=1, bit_rate=44100):
-
-        self.queue = queue.Queue(16)
+        # TODO: automagically select proper mic input
+        self.queue = queue.Queue(64)
         self.p = pyaudio.PyAudio()
         self.input_device_index = input_device_index
         self.frames_per_buffer = frames_per_buffer
@@ -49,10 +49,11 @@ class Recorder:
         if not self.queue.full():
             self.queue.put(in_data)
         else:
-            # pass
-            print("Microphone buffer overrun")
+            pass
+            # print("Mic buffer Overrun!")
+            # TODO: uncomment assertion or at least print statement
             # raise ValueError("Microphone buffer overrun")
-            print("New data: " + str(in_data[1:100]))
+            # print("New data: " + str(in_data[1:10]))
         return (in_data, pyaudio.paContinue)
 
     def isEmpty(self):
@@ -68,11 +69,13 @@ class Recorder:
 
         Check it in logic by using isEmpty() method.
         """
-        assert self.isEmpty(), "You can't get data from empty queue"
-
-        data = self.queue.get()
-        self.queue.task_done()
-        return data
+        # assert self.isEmpty(), "You can't get data from empty queue"
+        if self.isEmpty():
+            return None
+        else:
+            data = self.queue.get()
+            self.queue.task_done()
+            return data
 
     def exit(self):
         print("Exiting pyAudio microphone stream")

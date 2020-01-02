@@ -5,3 +5,5 @@ QAM_UT/*.svg
 QAM_UT/setup.py
 QAM_UT/testCython.py
 build/*
+.env/
+.vscode

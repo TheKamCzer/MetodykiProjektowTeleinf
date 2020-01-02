@@ -41,9 +41,10 @@ class ModulatorQAM:
     def __get_timebase(self, requiredLength: int):
 
         __BITS_PER_SYMBOL = 4
-        t = np.arange(self.currentTime,
-                      requiredLength*self.sampleTime,
-                      self.sampleTime, )
+        t = np.linspace(start=self.currentTime,
+                        stop=self.currentTime + requiredLength*self.sampleTime,
+                        num=requiredLength,
+                        dtype=np.float)
         self.currentTime = t[-1]+self.sampleTime
         return t
 

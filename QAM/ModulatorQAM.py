@@ -6,11 +6,15 @@ import numpy as np
 import commpy as cp
 from scipy import signal
 import matplotlib.pyplot as plt
+from typing import List, Dict
 
 
 class ModulatorQAM:
 
     def __init__(self, carrierFreq, upsamplingFactor, sampleRate, fi=0):
+        """
+            sampleRate - sample rate of output stream (eg. PLUTO) 
+        """
         self.carrierFreq = carrierFreq
         self.upsamplingFactor = upsamplingFactor
         self.fi = fi
@@ -48,18 +52,20 @@ class ModulatorQAM:
         self.currentTime = t[-1]+self.sampleTime
         return t
 
-    def modulateQAM16(self, bitsToModulate, isSignalUpconverted=True, debug=False):
+    def modulateQAM16(self, dataToModulate: List[bytearray], isSignalUpconverted=True, debug=False):
         """
-        Returns complex modulated signal.
+        takes bit array of bits to modulate and
+        returns complex modulated signal.
         Can be called multiple times because it keeps track
         of the timebase
 
         """
 
         __BITS_PER_SYMBOL = 4
-        # flatting array allows working with input data that comes directly
-        # from pyAudio as well as made up in unitest 
-        bitsToModulate = np.ndarray.flatten(bitsToModulate)
+        # converting bytestream from naitive python bytearry ( data is represented as int16) to
+        # numpy bitstream
+        bitsToModulate = np.frombuffer(dataToModulate,  dtype=np.int16)
+        bitsToModulate = np.unpackbits(bitsToModulate.view(np.uint8))
 
         bitsLength = len(bitsToModulate)
 
@@ -116,9 +122,9 @@ class ModulatorQAM:
             return np.add(signalIFilt, 1j*signalQFilt, dtype=np.complex128)
         else:
             t = self.__get_timebase(len(signalI))
-            modSig = np.add(np.multiply(signalIFilt, np.cos(2 * np.pi * self.carrierFreq * t + self.fi)),
-                            1j * np.multiply(signalQFilt, np.sin(2 *
-                                                                 np.pi * self.carrierFreq * t + self.fi)))
+            modSig = np.add(np.multiply(signalIFilt, 100 * np.cos(2 * np.pi * self.carrierFreq * t + self.fi)),
+                            1j * np.multiply(signalQFilt,  100 * np.sin(2 *
+                                                                          np.pi * self.carrierFreq * t + self.fi)))
             if debug == True:
                 fig1, axs1 = plt.subplots(2, 1, constrained_layout=True)
                 fig1.suptitle('Upconverted symbols', fontsize=16)

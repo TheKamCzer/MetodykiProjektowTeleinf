@@ -49,8 +49,10 @@ class Recorder:
         if not self.queue.full():
             self.queue.put(in_data)
         else:
+            # pass
+            print("Microphone buffer overrun")
             # raise ValueError("Microphone buffer overrun")
-            print("New data" + str(in_data))
+            print("New data: " + str(in_data[1:100]))
         return (in_data, pyaudio.paContinue)
 
     def isEmpty(self):

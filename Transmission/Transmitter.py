@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/usr/lib/python2.7/site-packages/')
 import adi
 
 

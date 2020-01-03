@@ -1,5 +1,3 @@
-import sys
-sys.path.append('/usr/lib/python2.7/site-packages/')
 from QPSK.Modulator import Modulator
 from QPSK.Demodulator import Demodulator
 from Transmission.Transmitter import Transmitter

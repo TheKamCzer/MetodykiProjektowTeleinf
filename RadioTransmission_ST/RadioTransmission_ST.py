@@ -1,8 +1,8 @@
-from QPSK.Modulator import Modulator
-from QPSK.Demodulator import Demodulator
-from RadioTransmission_ST.RadioChannel import RadioChannel
 import numpy as np
 
+from QPSK.Demodulator import Demodulator
+from QPSK.Modulator import Modulator
+from RadioTransmission_ST.RadioChannel import RadioChannel
 
 ########################################################################################################################
 #       CONSTANTS
@@ -72,11 +72,6 @@ def shouldModulateAndDemodulateBitsWithoutErrorWhenHighAttenuationPresent():
     assert demodulatedBits == __BITS
 
 
-def shouldModulateAndDemodulateBitsWithCarrierFrequency():
-    demodulatedBits = __modulateAndDemodulate(carrFreq=2000000)
-    assert demodulatedBits == __BITS
-
-
 ########################################################################################################################
 #       RUN ALL TESTS
 ########################################################################################################################
@@ -88,4 +83,3 @@ def run():
     shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs3()
     shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0()
     shouldModulateAndDemodulateBitsWithoutErrorWhenHighAttenuationPresent()
-    shouldModulateAndDemodulateBitsWithCarrierFrequency()

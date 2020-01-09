@@ -56,7 +56,7 @@ while True:
         sdr.tx(modulatedFrame)
         break
 
-
+# TODO: separate tx and rx in threads
 for _ in range(200):
     x = sdr.rx()
     f, Pxx_den = signal.periodogram(x, fs)

@@ -9,49 +9,53 @@ import numpy as np
 #       CONSTANTS
 ########################################################################################################################
 
-__HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
-__SEED = np.random.seed(283319)
+__START_HEADER = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]
+__END_HEADER = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+                1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
 __BITS = np.random.randint(2, size=2000).tolist()
-__FRAME = __HEADER + __BITS
+__FRAME = __START_HEADER + __BITS + __END_HEADER
 __SYMBOL_LENGTH_IN_BITS = 8
-__BUFFER_SIZE = 1024
 __CARRIER_FREQ = 20000
 __NUM_OF_PERIODS_IN_SYMBOL = 2
-__FI = 0
 __SAMPLING_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 
 
 ########################################################################################################################
 #       FUNCTIONS
 ########################################################################################################################
-
 def __transmitSignalWithFrameSynchronization(expectedDataPosition=32*__SYMBOL_LENGTH_IN_BITS, snr=None, offset=0,
                                              freqErr=0, phaseErr=0):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    channel = RadioChannel()
-    frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    channel = RadioChannel(__SAMPLING_RATE)
+    frameSync = FrameSynchronization(modulator.modulate(__START_HEADER), modulator.modulate(__END_HEADER),
+                                     __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
 
-    signal = modulator.modulate(__FRAME)
-    transmittedSignal = channel.transmit(signal, snr=snr, signalOffset=offset, freqErr=freqErr, phaseErr=phaseErr)
-    dataPosition = frameSync.synchronizeFrame(transmittedSignal)
+    modulatedSignal = modulator.modulate(__FRAME)
+    transmittedSignal = channel.transmit(modulatedSignal, snr=snr, signalOffset=offset, freqErr=freqErr, phaseErr=phaseErr)
+
+    dataPosition = frameSync.synchronizeStartHeader(transmittedSignal)
+    dataEndPosition = frameSync.synchronizeStopHeader(transmittedSignal)
     assert(dataPosition == expectedDataPosition + offset)
 
-    demodulatedBits = demodulator.demodulate(transmittedSignal[dataPosition:])
+    transmittedSignal = frameSync.correctFreqAndPhase(transmittedSignal[dataPosition:dataEndPosition])
+    demodulatedBits = demodulator.demodulate(transmittedSignal)
     return demodulatedBits
 
 def __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError, offset, snr=None):
-    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLING_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
-    channel = RadioChannel()
-    frameSync = FrameSynchronization(modulator.modulate(__HEADER), __SYMBOL_LENGTH_IN_BITS)
+    modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
+    channel = RadioChannel(__SAMPLING_RATE)
+    frameSync = FrameSynchronization(modulator.modulate(__START_HEADER), modulator.modulate(__END_HEADER),
+                                     __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
     timeRecover = TimingRecovery(__SYMBOL_LENGTH_IN_BITS)
 
-    signal = modulator.modulate(__FRAME)
-    transmittedSignal = channel.transmit(signal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr)
-    dataPosition = frameSync.synchronizeFrame(transmittedSignal)
-    transmittedSignal = transmittedSignal[dataPosition:]
+    modulatedSignal = modulator.modulate(__FRAME)
+    transmittedSignal = channel.transmit(modulatedSignal, signalOffset=offset, adcSamplingErr=samplingError, snr=snr)
+    dataPosition = frameSync.synchronizeStartHeader(transmittedSignal)
+    dataEndPosition = frameSync.synchronizeStopHeader(transmittedSignal)
+    transmittedSignal = transmittedSignal[dataPosition:dataEndPosition]
     transmittedSignal = timeRecover.synchronizeTiming(transmittedSignal)
 
     demodulatedBits = demodulator.demodulate(transmittedSignal)
@@ -77,43 +81,49 @@ def shouldFindFrameWithoutNoiseInTheMiddleOfStream():
     demodulatedBits = __transmitSignalWithFrameSynchronization(offset=177)
     assert(demodulatedBits == __BITS)
 
-def shouldFindFrameWithSnr3AtTheBeginningOfStream():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=3)
-    __assertBerLessThan(demodulatedBits, 0.05)
+def shouldFindFrameWithSnr10AtTheBeginningOfStream():
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=15)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
-def shouldFindFrameWithSnr3InTheMiddleOfStream():
-    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=3, offset=242)
-    __assertBerLessThan(demodulatedBits, 0.05)
+def shouldFindFrameWithSnr10InTheMiddleOfStream():
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, offset=242)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithSmallPhaseError():
-    __transmitSignalWithFrameSynchronization(snr=10, phaseErr=np.pi/17)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, phaseErr=np.pi/17)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithLargePhaseError():
-    __transmitSignalWithFrameSynchronization(snr=5, phaseErr=np.pi)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, phaseErr=np.pi)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithSmallFreqError():
-    __transmitSignalWithFrameSynchronization(snr=10, freqErr=10e-4 * __CARRIER_FREQ)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=16, freqErr=10e-4 * __CARRIER_FREQ)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldFindFrameWithLargeFreqAndPhaseError():
-    __transmitSignalWithFrameSynchronization(snr=10, freqErr=10e-2 * __CARRIER_FREQ, phaseErr=np.pi/2)
+    demodulatedBits = __transmitSignalWithFrameSynchronization(snr=20, freqErr=-2*10e-4 * __CARRIER_FREQ, phaseErr=np.pi)
+    __assertBerLessThan(demodulatedBits, 0.001)
 
 def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndHigherSamplingRate():
     demodulatedBits = __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError=0.001, offset=534, snr=10)
-    __assertBerLessThan(demodulatedBits, 0.0001)
+    assert(demodulatedBits == __BITS)
 
 def shouldProperlyDemodulateSignalWithGivenBerWhenFrameAndLowerSamplingRate():
-    demodulatedBits = __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError=-0.001, offset=345, snr=10)
-    __assertBerLessThan(demodulatedBits, 0.002)
+    demodulatedBits = __transmitSignalWithFrameSynchronizationAndSamplingError(samplingError=-0.0001, offset=345, snr=10)
+    assert(demodulatedBits == __BITS)
+
 
 ########################################################################################################################
 #       RUN ALL TESTS
 ########################################################################################################################
 
 def run():
+    np.random.seed(283319)
     shouldFindFrameWithoutNoiseAtTheBeginningOfStream()
     shouldFindFrameWithoutNoiseInTheMiddleOfStream()
-    shouldFindFrameWithSnr3AtTheBeginningOfStream()
-    shouldFindFrameWithSnr3InTheMiddleOfStream()
+    shouldFindFrameWithSnr10AtTheBeginningOfStream()
+    shouldFindFrameWithSnr10InTheMiddleOfStream()
     shouldFindFrameWithSmallPhaseError()
     shouldFindFrameWithLargePhaseError()
     shouldFindFrameWithSmallFreqError()

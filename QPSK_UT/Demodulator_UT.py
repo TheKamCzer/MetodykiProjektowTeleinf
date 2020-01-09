@@ -10,7 +10,6 @@ import commpy as cp
 __CARRIER_FREQ = 100
 __NUM_OF_PERIODS_IN_SYMBOL = 2
 __SYMBOL_LENGTH_IN_BITS = 32
-__FI = 0
 __SAMPLE_RATE = __CARRIER_FREQ * __SYMBOL_LENGTH_IN_BITS / __NUM_OF_PERIODS_IN_SYMBOL
 __INPUT_BITS = [1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1,
                 1, -1, 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1,
@@ -59,7 +58,7 @@ def __calcSignal():
     sigQ = __filterSignal(sigQ)
 
     t = np.linspace(0, __NUM_OF_PERIODS_IN_SYMBOL / __CARRIER_FREQ * numOfBitsPerSig, __SYMBOL_LENGTH_IN_BITS * numOfBitsPerSig)
-    ang = 2 * np.pi * __CARRIER_FREQ * t + __FI
+    ang = 2 * np.pi * __CARRIER_FREQ * t
 
     return np.multiply(sigI, np.cos(ang)) - 1j * np.multiply(sigQ, np.sin(ang))
 
@@ -75,12 +74,12 @@ def __calcSignalPower(signal):
 ########################################################################################################################
 
 def shouldDemodulateInputBits():
-    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLE_RATE)
     signal = __calcSignal()
     assert(dem.demodulate(signal) == __OUTPUT_BITS)
 
 def shouldDemodulateMostOfInputBitsWithNoise():
-    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __FI, __SAMPLE_RATE, __NUM_OF_PERIODS_IN_SYMBOL)
+    dem = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS,  __SAMPLE_RATE)
     signal = __calcSignal()
 
     noise = np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal) + 1j * np.random.normal(0, 1, int(len(signal))) * __calcSignalPower(signal)

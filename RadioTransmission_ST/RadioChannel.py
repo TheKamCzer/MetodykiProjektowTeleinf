@@ -15,7 +15,6 @@ class RadioChannel:
         return sigPow
 
     def transmit(self, inputSignal, snr=None, signalOffset=0, channelAttenuation=1, freqErr=0, phaseErr=0, adcSamplingErr=None):
-
         if snr is not None:
             noise = np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)\
                 + 1j * np.random.normal(0, 1, int(len(inputSignal))) * self.__calcSignalPow(inputSignal) * pow(10, -snr/10)

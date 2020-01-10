@@ -1,4 +1,4 @@
-*/__pycache__/*
+**/__pycache__
 *.code-workspace
 QAM_UT/*.log
 QAM_UT/*.svg

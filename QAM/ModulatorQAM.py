@@ -24,6 +24,7 @@ class ModulatorQAM:
         self.sampleTime = 1 / self.sampleRate
         self.currentTime = 0
         self._MAPPING_TABLE_QAM16 = {
+        # TODO: check corectness of the table 
             (0, 0, 0, 0): -3-3j,
             (0, 0, 0, 1): -3-1j,
             (0, 0, 1, 0): -3+3j,

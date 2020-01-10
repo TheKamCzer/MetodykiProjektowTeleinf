@@ -79,4 +79,6 @@ class Recorder:
 
     def exit(self):
         print("Exiting pyAudio microphone stream")
+        self.stream.stop_stream()
         self.stream.close()
+        self.p.terminate()

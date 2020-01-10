@@ -13,7 +13,6 @@ class Player:
         self.channels = channels
         self.bit_rate = bit_rate
 
-
     def get_speaker_info(self):
         """TODO"""
         info = self.p.get_host_api_info_by_index(0)
@@ -22,18 +21,23 @@ class Player:
             if (self.p.get_device_info_by_host_api_device_index(0, i).get('maxOutputChannels')) > 0:
                 print("Input Device id ", i, " - ",
                       self.p.get_device_info_by_host_api_device_index(0, i).get('name'))
-     
+
     def play(self):
-        self.stream = p.open(format=self.sample_format,
-                        channels=self.channels,
-                        rate=self.bit_rate,
-                        output=True,
-                        stream_callback=self.callback)
+        self.stream = self.p.open(format=self.sample_format,
+                                  channels=self.channels,
+                                  rate=self.bit_rate,
+                                  output=True,
+                                  stream_callback=self.callback)
         self.stream.start_stream()
 
-    def callback(self):
+    def callback(self, in_data, frame_count, time_info, status):
         """get data from queue"""
-        pass
+        if self.queue.qsize == 0:
+            data = [0] * self.frames_per_buffer
+        else:
+            data = self.queue.get()
+            self.queue.task_done()
+            return data
 
     def put_data(self, data_chunk):
         """put data from external world"""
@@ -41,4 +45,6 @@ class Player:
 
     def exit(self):
         print("Exiting pyAudio output stream")
+        self.stream.stop_stream()
         self.stream.close()
+        self.p.terminate()

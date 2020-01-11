@@ -29,5 +29,5 @@ data = wf.readframes(chunk)
 
 def shouldPlay():
     player = Player(stream, data, p, chunk, wf)
-    player.play();
+    player.play()
 

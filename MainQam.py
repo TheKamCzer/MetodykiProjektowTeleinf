@@ -102,7 +102,7 @@ def main_qam_tx(debug: bool = False, mic_used: bool = False, hw_used: bool = Fal
             while True:
                 modulatedFrame = mod.modulateQAM16(
                     np.concatenate((np.frombuffer(np.asarray(__START_HEADER) * 2**15,  dtype=np.int16),
-                                   soundFrame[:100],
+                                   soundFrame[:], # TODO: change number of samples by cmd option
                                    np.frombuffer(np.asarray(__END_HEADER)* 2**15,  dtype=np.int16))),
                     isSignalUpconverted=True, debug=True)
                 

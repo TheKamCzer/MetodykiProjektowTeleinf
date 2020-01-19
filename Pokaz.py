@@ -1,10 +1,10 @@
 import numpy as np
-
 from QPSK.Demodulator import Demodulator
 from QPSK.Modulator import Modulator
 from Transmission.Transmitter import Transmitter
 
 __BITS = np.random.randint(2, size=200).tolist()
+
 
 __CARRIER_FREQ = 100
 __NUM_OF_PERIODS_IN_SYMBOL = 2

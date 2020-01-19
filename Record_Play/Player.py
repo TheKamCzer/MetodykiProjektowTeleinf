@@ -1,22 +1,50 @@
 import pyaudio
-import wave
+import queue
 
 
 class Player:
-    def __init__(self, stream, data, p, chunk, wf):
-        self.stream = stream
-        self.data = data
-        self.p = p
-        self.wf = wf
-        self.chunk = chunk
+    def __init__(self, output_device_index=5, frames_per_buffer=1024,
+                 sample_format=pyaudio.paInt16, channels=1, bit_rate=44100):
+        self.queue = queue.Queue(64)
+        self.p = pyaudio.PyAudio()
+        self.output_device_index = output_device_index
+        self.frames_per_buffer = frames_per_buffer
+        self.sample_format = sample_format
+        self.channels = channels
+        self.bit_rate = bit_rate
+
+    def get_speaker_info(self):
+        """TODO"""
+        info = self.p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (self.p.get_device_info_by_host_api_device_index(0, i).get('maxOutputChannels')) > 0:
+                print("Input Device id ", i, " - ",
+                      self.p.get_device_info_by_host_api_device_index(0, i).get('name'))
 
     def play(self):
+        self.stream = self.p.open(format=self.sample_format,
+                                  channels=self.channels,
+                                  rate=self.bit_rate,
+                                  output=True,
+                                  stream_callback=self.callback)
+        self.stream.start_stream()
 
-        while self.data != '':
-            self.stream.write(self.data)
-            self.data = self.wf.readframes(self.chunk)
-        # Close and terminate the stream
-        print('Stopped')
+    def callback(self, in_data, frame_count, time_info, status):
+        """get data from queue"""
+        if self.queue.qsize == 0:
+            data = [0] * self.frames_per_buffer
+        else:
+            data = self.queue.get()
+            self.queue.task_done()
+            return data
+
+    def put_data(self, data_chunk):
+        """put data from external world"""
+        pass
+
+    def exit(self):
+        print("Exiting pyAudio output stream")
+        self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
-        return 0

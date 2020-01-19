@@ -123,8 +123,15 @@ def main_qam_tx(debug: bool = False, mic_used: bool = False, hw_used: bool = Fal
 
 
 def main_qam_rx(debug: bool = False):
-    pass
-
+    from Record_Play.Player import Player
+    from QAM.DemodulatorQAM import DemodulatorQAM
+    from time import sleep
+    if debug == True:
+        from scipy import signal
+        import numpy as np
+        import matplotlib
+    
+    print("Starting demodulator")
 
 if __name__ == "__main__":
     import argparse

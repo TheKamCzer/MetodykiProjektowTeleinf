@@ -1,8 +1,8 @@
-from QPSK.Modulator import Modulator
-from QPSK.Demodulator import Demodulator
-from RadioTransmission_ST.RadioChannel import RadioChannel
 import numpy as np
 
+from QPSK.Demodulator import Demodulator
+from QPSK.Modulator import Modulator
+from RadioTransmission_ST.RadioChannel import RadioChannel
 
 ########################################################################################################################
 #       CONSTANTS
@@ -23,15 +23,18 @@ def __modulateSignal():
     modulator = Modulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS,  __SAMPLING_RATE)
     return modulator.modulate(__BITS)
 
+
 def __demodulateSignal(signal):
     demodulator = Demodulator(__CARRIER_FREQ, __SYMBOL_LENGTH_IN_BITS, __SAMPLING_RATE)
     return demodulator.demodulate(signal)
+
 
 def __modulateAndDemodulate(snr=None, attenuation=1):
     channel = RadioChannel(__SAMPLING_RATE)
     signal = __modulateSignal()
     transmittedSignal = channel.transmit(signal, snr, channelAttenuation=attenuation)
     return __demodulateSignal(transmittedSignal)
+
 
 def __assertBerLessThan(signal, maxBer):
     corruptedBits = 0
@@ -49,21 +52,26 @@ def shouldModulateAndDemodulateBitsWithoutErrorWhenNoiseNotPresent():
     demodulatedBits = __modulateAndDemodulate()
     assert demodulatedBits == __BITS
 
+
 def shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs40():
     demodulatedBits = __modulateAndDemodulate(40)
     assert demodulatedBits == __BITS
+
 
 def shouldModulateAndDemodulateBitsWithNoErrorWhenSnrIs3():
     demodulatedBits = __modulateAndDemodulate(3)
     __assertBerLessThan(demodulatedBits, 0.02)
 
+
 def shouldModulateAndDemodulateBitsWithSmallErrorWhenSnrIs0():
     demodulatedBits = __modulateAndDemodulate(0)
     __assertBerLessThan(demodulatedBits, 0.1)
 
+
 def shouldModulateAndDemodulateBitsWithoutErrorWhenHighAttenuationPresent():
     demodulatedBits = __modulateAndDemodulate(attenuation=10e6)
     assert demodulatedBits == __BITS
+
 
 ########################################################################################################################
 #       RUN ALL TESTS

@@ -26,8 +26,8 @@ class Transmitter:
 
         self.pluto = adi.Pluto()
         # self.pluto.tx_rf_bandwidth
-        self.pluto.tx_lo = self.carrierFreq
-        self.pluto.tx_enabled_channels = [0, 1]
+        self.pluto.tx_lo = int(self.carrierFreq)
+        # self.pluto.tx_enabled_channels = [0, 1]
         self.pluto.sample_rate = self.sampleRate
 
         self.recordedDataQueue = Queue()
@@ -44,14 +44,14 @@ class Transmitter:
         def callback():
             self.recordedDataQueue.put(0)
         #TODO: writeFunc of record from mic
-        data = ""
-        self.recordedDataQueue.put(data)
+        # data = ""
+        # self.recordedDataQueue.put(data)
         pass
 
     def modulateData(self):
-        if self.recordedDataQueue.not_empty:
+        if not self.recordedDataQueue.empty():
             data = self.recordedDataQueue.get()
-            self.recordedDataQueue.mutex.release()
+            self.recordedDataQueue.task_done()
             modulatedData = self.modulator.modulate(data)
             self.modulatedDataQueue.put(modulatedData)
 
@@ -65,8 +65,8 @@ class Transmitter:
         self.pluto.tx(data)
 
     def transmit(self):
-        if self.dataToTransmit.not_empty:
+        if not self.dataToTransmit.empty():
             data = self.dataToTransmit.get()
             self.pluto.tx_destroy_buffer()
             self.pluto.tx(data)
-            self.dataToTransmit.mutex.release()
+            self.dataToTransmit.task_done()

@@ -25,7 +25,7 @@ class TimingRecovery:
             qActual = Q[actualIdx]
             qNext = Q[nextIdx]
 
-            err = -(iActual * np.sign(iNext) - iNext * np.sign(iActual) + qActual * np.sign(qNext) - qNext * np.sign(qActual))
+            err = - (iActual if iNext > 0 else - iActual) + (iNext if iActual > 0 else - iNext) - (qActual if qNext > 0 else -qActual) + (qNext if qActual > 0 else -qNext)
             if adap1 > 1 : adap1 -= 1
             elif adap1 < -1 : adap1 += 1
 

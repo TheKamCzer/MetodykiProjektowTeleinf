@@ -13,6 +13,7 @@ import commpy as cp
 from scipy import signal
 import sys
 import pyaudio
+import threading
 
 
 class Transmission:
@@ -27,11 +28,14 @@ class Transmission:
         self.upsamplingFactor = upsamplingFactor
         self.input_device_index = input_device_index
 
+        # Queues for threads
+        self.audioQueue = Queue(10000)
+        self.packetQueue = Queue(10000)
+
         # Gathering samples #
         self.p = pyaudio.PyAudio()
         for i in range(self.p.get_device_count()):
             print(self.p.get_device_info_by_index(i))
-        self.audioQueue = Queue(10000)
         self.stream = self.p.open(
             format=pyaudio.paInt8,
             input_device_index=self.input_device_index,
@@ -66,6 +70,12 @@ class Transmission:
         self.sdr_pluto.sample_rate = int(self.sampling_rate)
         self.sdr_pluto.tx_cyclic_buffer = False
 
+        # Initializing threads
+        self.threads = []
+        self.threads.append(threading.Thread(target=self.prepare_frame(), name="gatDataFromMicAndConstelizeIt"))
+        self.threads.append(threading.Thread(target=self.send_frame(), name="sendDataToAir"))
+
+
     def mic_callback(self, in_data, frame_count, time_info, status):
         self.audioQueue.put(in_data)
         return (in_data, pyaudio.paContinue)
@@ -96,6 +106,38 @@ class Transmission:
         signalQ = filteredQ[int(self.upsamplingFactor * 5): - int(self.upsamplingFactor * 5) + 1]
 
         return signalI + 1j*signalQ
+
+    def unpackbits(self, x,num_bits):
+        xshape = list(x.shape)
+        x = x.reshape([-1,1])
+        to_and = 2**np.arange(num_bits).reshape([1,num_bits])
+        return (x & to_and).astype(bool).astype(int).reshape(xshape + [num_bits])
+
+
+    def prepare_frame(self):
+        while True:
+            if not self.audioQueue.empty():
+
+                audio_frame = self.unpackbits(np.frombuffer(self.audioQueue.get(),  dtype=np.int8),8)
+                flatten_audio_frame= np.ndarray.flatten(audio_frame)
+
+                header_bytes = np.array(self.packet_header ,dtype=np.int64)
+                footer_bytes = np.array(self.packet_footer , dtype=np.int64)
+
+                frame_ready_to_send = self.create_frame(np.concatenate((header_bytes, flatten_audio_frame, footer_bytes)))
+
+                self.packetQueue.put(frame_ready_to_send)
+
+
+    def send_frame(self, data_to_tx):
+        self.sdr_pluto.tx(data_to_tx)
+
+
+    def start(self):
+        pass
+
+
+
 
 
 

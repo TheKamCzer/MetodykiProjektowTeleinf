@@ -3,7 +3,7 @@ import queue
 
 
 class Recorder:
-    def __init__(self, input_device_index=5, frames_per_buffer=1024,
+    def __init__(self, input_device_index=0, frames_per_buffer=1024,
                  sample_format=pyaudio.paInt16, channels=1, bit_rate=44100):
         # TODO: automagically select proper mic input
         self.queue = queue.Queue(64)

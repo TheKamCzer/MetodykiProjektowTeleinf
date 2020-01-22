@@ -13,18 +13,29 @@ class ModulatorQAM:
 
     def __init__(self, carrierFreq, upsamplingFactor, sampleRate, fi=0):
         """
-            sampleRate - sample rate of output stream (eg. PLUTO) 
+            sampleRate - sample rate of output stream (eg. PLUTO)
         """
         self.carrierFreq = carrierFreq
         self.upsamplingFactor = upsamplingFactor
+        self.symbolLength =upsamplingFactor
         self.fi = fi
         self.sampleRate = sampleRate
         self.psfFilter = cp.rrcosfilter(int(
             self.upsamplingFactor) * 10, 0.35, self.upsamplingFactor / self.sampleRate, self.sampleRate)[1]
         self.sampleTime = 1 / self.sampleRate
         self.currentTime = 0
+
+        self.__BITS_PER_SYMBOL = 2
+
+
+        self._MAPPING_TABLE_QAMA = {
+            (0, 0): -1 - 1j,
+            (0, 1): 1 - 1j,
+            (1, 0): -1 + 1j,
+            (1, 1): +1 + 1j
+        }
         self._MAPPING_TABLE_QAM16 = {
-        # TODO: check corectness of the table 
+            # TODO: check corectness of the table
             (0, 0, 0, 0): -3-3j,
             (0, 0, 0, 1): -3-1j,
             (0, 0, 1, 0): -3+3j,
@@ -40,18 +51,18 @@ class ModulatorQAM:
             (1, 1, 0, 0):  1-3j,
             (1, 1, 0, 1):  1-1j,
             (1, 1, 1, 0):  1+3j,
-            (1, 1, 1, 1):  1+1j
-        }
+            (1, 1, 1, 1):  1+1j}
 
-    def __get_timebase(self, requiredLength: int):
 
-        __BITS_PER_SYMBOL = 4
-        t = np.linspace(start=self.currentTime,
-                        stop=self.currentTime + requiredLength*self.sampleTime,
-                        num=requiredLength,
-                        dtype=np.float)
-        self.currentTime = t[-1]+self.sampleTime
-        return t
+    # def __get_timebase(self, requiredLength: int):
+
+    #     __BITS_PER_SYMBOL = 4
+    #     t = np.linspace(start=self.currentTime,
+    #                     stop=self.currentTime + requiredLength*self.sampleTime,
+    #                     num=requiredLength,
+    #                     dtype=np.float)
+    #     self.currentTime = t[-1]+self.sampleTime
+    #     return t
 
     def modulateQAM16(self, dataToModulate: List[bytearray], isSignalUpconverted=True, debug=False):
         """
@@ -62,7 +73,6 @@ class ModulatorQAM:
 
         """
 
-        __BITS_PER_SYMBOL = 4
         # converting bytestream from naitive python bytearry ( data is represented as int16) to
         # numpy bitstream
         bitsToModulate = np.frombuffer(dataToModulate,  dtype=np.int16)
@@ -75,7 +85,7 @@ class ModulatorQAM:
 
         # gruping data into chunks of 4
         bitsGroupped = np.array(bitsToModulate).reshape(
-            (int(bitsLength/4), __BITS_PER_SYMBOL))
+            (int(bitsLength/4), 4))
 
         # using dictionary to convert input data array to symbols
         symbolsQAM16 = np.array(
@@ -125,7 +135,7 @@ class ModulatorQAM:
             t = self.__get_timebase(len(signalI))
             modSig = np.add(np.multiply(signalIFilt, 100 * np.cos(2 * np.pi * self.carrierFreq * t + self.fi)),
                             1j * np.multiply(signalQFilt,  100 * np.sin(2 *
-                                                                          np.pi * self.carrierFreq * t + self.fi)))
+                                                                        np.pi * self.carrierFreq * t + self.fi)))
             if debug == True:
                 fig1, axs1 = plt.subplots(2, 1, constrained_layout=True)
                 fig1.suptitle('Upconverted symbols', fontsize=16)
@@ -141,5 +151,57 @@ class ModulatorQAM:
 
             return modSig
 
-        # print("a")
-        #  =
+
+    def modulateQAMA(self, dataToModulate, debug=False):
+
+        bitsLength = int(len(dataToModulate)/2)
+
+
+        # grouping data into chunks of 2
+        bitsGroupped = np.array(dataToModulate).reshape(
+            bitsLength, self.__BITS_PER_SYMBOL)
+
+        # using dictionary to convert input data array to symbols
+        symbolsQAMA = np.array(
+            [self._MAPPING_TABLE_QAMA[tuple(b)] for b in bitsGroupped])
+
+
+        signalI = signal.upfirdn([1], np.real(symbolsQAMA), self.symbolLength)
+        signalQ = signal.upfirdn([1], np.imag(symbolsQAMA), self.symbolLength)
+
+        filteredI = np.convolve(signalI, self.psfFilter)
+        signalI = filteredI[int(self.symbolLength * 5): - int(self.symbolLength * 5) ]
+        filteredQ = np.convolve(signalQ, self.psfFilter)
+        signalQ = filteredQ[int(self.symbolLength * 5): - int(self.symbolLength * 5) ]
+
+        t = np.arange(0, bitsLength * self.symbolLength * self.sampleTime -self.sampleTime , self.sampleTime)
+
+        if debug == True:
+            fig1, axs1 = plt.subplots(2, 1, constrained_layout=True)
+            fig1.suptitle('Baseband symbols', fontsize=16)
+            axs1[0].plot(signalI)
+            axs1[0].set_title('I component')
+            axs1[0].set_xlabel('sample')
+            axs1[0].set_ylabel('value')
+            axs1[1].plot(signalQ)
+            axs1[1].set_title('Q component')
+            axs1[1].set_xlabel('sample')
+            axs1[1].set_ylabel('value')
+            plt.show()
+
+        return np.multiply(signalI, np.cos(2 * np.pi * self.carrierFreq * t)) - 1j * np.multiply(signalQ, np.sin(2 * np.pi * self.carrierFreq * t))
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+

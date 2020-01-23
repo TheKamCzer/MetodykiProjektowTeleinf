@@ -162,9 +162,9 @@ class Transmission:
                 print(len(data_to_tx))
                 self.sdr_pluto.tx(data_to_tx)
 
-                # fig,ax = plt.subplots()
-                # ax.scatter(data_to_tx.real,data_to_tx.imag)
-                # plt.show(block=False)
+                fig,ax = plt.subplots()
+                ax.scatter(data_to_tx.real,data_to_tx.imag)
+                plt.show(block=False)
 
     def start(self):
         for th in self.threads:

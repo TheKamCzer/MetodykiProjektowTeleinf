@@ -159,6 +159,7 @@ class Transmission:
 
                 data_to_tx = self.packetQueue.get()
                 self.packetQueue.task_done()
+                print(len(data_to_tx))
                 self.sdr_pluto.tx(data_to_tx)
 
                 # fig,ax = plt.subplots()
